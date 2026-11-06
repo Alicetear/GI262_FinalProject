@@ -2,50 +2,57 @@ using UnityEngine;
 
 public class BaseEnemy : MonoBehaviour
 {
-    [Header("Enemy Stats")]
-    [SerializeField] protected int hp = 30;
-    [SerializeField] protected float speed = 2f;
+    [Header("ตั้งค่าพื้นฐานศัตรู")]
+    [SerializeField] protected int maxHealth = 30;
+    protected int currentHealth;
+    [SerializeField] protected float moveSpeed = 3f;
+    [SerializeField] protected int attackDamage = 10;
 
-    protected bool isMoving = true; // เพิ่มตัวแปรเช็กสถานะการเดิน
+    protected bool hasReachedWall = false;
+    private Rigidbody2D rb;
 
-    protected virtual void Update()
+    protected virtual void Start()
     {
-        Move();
+        currentHealth = maxHealth;
+        rb = GetComponent<Rigidbody2D>();
     }
 
-    protected virtual void Move()
+    // เปลี่ยนมาใช้ FixedUpdate สำหรับการเคลื่อนที่ที่ยุ่งเกี่ยวกับ Rigidbody 2D
+    protected virtual void FixedUpdate()
     {
-        // จะเดินก็ต่อเมื่อ isMoving เป็น true
-        if (isMoving)
+        if (!hasReachedWall && rb != null)
         {
-            transform.Translate(Vector3.right * speed * Time.deltaTime);
+            // ใช้ MovePosition ขยับตามฟิสิกส์ จะได้ไม่เดินทะลุกำแพง
+            Vector2 newPos = rb.position + Vector2.right * moveSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(newPos);
         }
     }
 
-    // ฟังก์ชันตรวจจับการชนแบบ Trigger
-    private void OnTriggerEnter2D(Collider2D collision)
+    // ฟังก์ชันตรวจจับการชนแบบ OnCollisionEnter2D
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.CompareTag("Wall"))
+        // เช็กว่าชนกับวัตถุที่มี Tag เป็น "Wall" หรือไม่
+        if (collision.gameObject.CompareTag("Wall"))
         {
-            isMoving = false; // สั่งให้หยุดเดิน
-            Debug.Log($"{gameObject.name} ถึงกำแพงแล้ว! เตรียมโจมตีฐาน");
+            hasReachedWall = true; // สั่งให้หยุดเดินทันที
+
+            Barricade barricade = collision.gameObject.GetComponent<Barricade>();
+            if (barricade != null)
+            {
+                barricade.TakeDamage(attackDamage); // ทำดาเมจใส่กำแพง
+            }
         }
     }
 
-    private void OnMouseDown()
+    public virtual void TakeDamage(int damageAmount)
     {
-        TakeDamage(10);
-    }
-
-    public virtual void TakeDamage(int damage)
-    {
-        hp -= damage;
-        if (hp <= 0) Die();
+        currentHealth -= damageAmount;
+        if (currentHealth <= 0) Die();
     }
 
     protected virtual void Die()
     {
-        if (WaveManager.Instance != null) WaveManager.Instance.OnEnemyDied();
+        if (WaveManager.Instance != null) WaveManager.Instance.OnEnemyKilled();
         Destroy(gameObject);
     }
 }

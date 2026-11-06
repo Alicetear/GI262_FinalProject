@@ -2,70 +2,146 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class EnemySpawnPool
+{
+    public GameObject enemyPrefab;
+    [Range(0f, 100f)]
+    public float spawnWeight = 50f;
+}
+
+[System.Serializable]
+public class MixedNightWaveData
+{
+    public string nightName;
+    public List<EnemySpawnPool> enemyPool;
+    public int totalEnemiesToSpawn = 10;
+    public float spawnInterval = 1.5f;
+}
+
 public class WaveManager : MonoBehaviour
 {
-    public static WaveManager Instance; // ประกาศให้สคริปต์อื่นเรียกใช้ได้ง่าย
+    public static WaveManager Instance;
 
-    [System.Serializable]
-    public class WaveData
-    {
-        public string waveName; // เช่น "Night 1"
-        public List<GameObject> enemiesInWave; // ลาก Prefab ซอมบี้มาใส่เรียงตัว
-        public float spawnDelay = 2f; // ระยะเวลาเกิดแต่ละตัว
-    }
-
-    [Header("Wave Configuration")]
-    [SerializeField] private List<WaveData> allWaves;
-    [SerializeField] private Transform spawnPoint; // จุดเกิดด้านบนจอ
-
-    private Queue<GameObject> enemyQueue = new Queue<GameObject>();
+    [Header("ตั้งค่าเวฟผสมซอมบี้ (โปรโตไทป์ 2 คืน)")]
+    [SerializeField] private List<MixedNightWaveData> nightWaves;
     private int currentWaveIndex = 0;
-    private int activeEnemies = 0;
+
+    [Header("จุดเกิดศัตรู")]
+    [SerializeField] private Transform[] spawnPoints;
+
+    private int enemiesRemainingToSpawn = 0;
+    private int enemiesAliveInScene = 0;
+    private bool isSpawningWave = false;
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     private void Start()
     {
-        // สั่งให้เริ่มเทสเวฟแรกทันทีที่กด Play
-        StartWave(0);
+        StartCoroutine(StartWave(currentWaveIndex));
     }
 
-    public void StartWave(int index)
+    private IEnumerator StartWave(int waveIndex)
     {
-        currentWaveIndex = index;
-        enemyQueue.Clear();
-
-        // นำศัตรูเข้า Queue (Data Structure)
-        foreach (GameObject enemy in allWaves[index].enemiesInWave)
+        if (waveIndex >= nightWaves.Count)
         {
-            enemyQueue.Enqueue(enemy);
+            Debug.Log("🎉 ชนะเกมแล้ว! ผ่านครบทุกเวฟ");
+            yield break;
         }
 
-        activeEnemies = enemyQueue.Count;
-        StartCoroutine(SpawnRoutine());
+        MixedNightWaveData currentWave = nightWaves[waveIndex];
+        Debug.Log($"--- เริ่มต้น {currentWave.nightName} ---");
+
+        enemiesRemainingToSpawn = currentWave.totalEnemiesToSpawn;
+        // กำหนดจำนวนซอมบี้ทั้งหมดที่จะเกิดในเวฟนี้ เพื่อเอาไว้เช็กตอนตาย
+        enemiesAliveInScene = currentWave.totalEnemiesToSpawn;
+        isSpawningWave = true;
+
+        while (enemiesRemainingToSpawn > 0)
+        {
+            GameObject prefabToSpawn = GetRandomEnemyFromPool(currentWave.enemyPool);
+            SpawnEnemy(prefabToSpawn);
+
+            enemiesRemainingToSpawn--;
+            yield return new WaitForSeconds(currentWave.spawnInterval);
+        }
+
+        isSpawningWave = false;
     }
 
-    private IEnumerator SpawnRoutine()
+    private GameObject GetRandomEnemyFromPool(List<EnemySpawnPool> pool)
     {
-        while (enemyQueue.Count > 0)
-        {
-            GameObject nextEnemy = enemyQueue.Dequeue();
-            Instantiate(nextEnemy, spawnPoint.position, Quaternion.identity);
+        if (pool == null || pool.Count == 0) return null;
 
-            yield return new WaitForSeconds(allWaves[currentWaveIndex].spawnDelay);
+        float totalWeight = 0f;
+        foreach (var spawn in pool)
+        {
+            totalWeight += spawn.spawnWeight;
+        }
+
+        float randomValue = Random.Range(0f, totalWeight);
+        float currentWeight = 0f;
+
+        foreach (var spawn in pool)
+        {
+            currentWeight += spawn.spawnWeight;
+            if (randomValue <= currentWeight)
+            {
+                return spawn.enemyPrefab;
+            }
+        }
+
+        return pool[0].enemyPrefab;
+    }
+
+    private void SpawnEnemy(GameObject enemyPrefab)
+    {
+        if (spawnPoints.Length == 0 || enemyPrefab == null) return;
+
+        int randomIndex = Random.Range(0, spawnPoints.Length);
+        Instantiate(enemyPrefab, spawnPoints[randomIndex].position, Quaternion.identity);
+    }
+
+    // ฟังก์ชันนี้ถูกเรียกจาก BaseEnemy ตอนซอมบี้ตาย
+    public void OnEnemyKilled()
+    {
+        enemiesAliveInScene--;
+        Debug.Log($"ซอมบี้ตาย! เหลืออีก: {enemiesAliveInScene} ตัวในฉาก");
+
+        // เงื่อนไข: สปอว์นตัวสุดท้ายหมดแล้ว และซอมบี้ในฉากตายจนเกลี้ยงเป็น 0
+        if (!isSpawningWave && enemiesRemainingToSpawn <= 0 && enemiesAliveInScene <= 0)
+        {
+            currentWaveIndex++;
+
+            if (currentWaveIndex < nightWaves.Count)
+            {
+                Debug.Log($"✨ เคลียร์เวฟ {currentWaveIndex} สำเร็จ! กำลังไปคืนถัดไป...");
+                // หน่วงเวลาสัก 2 วินาทีก่อนเริ่มเวฟใหม่ ให้ผู้เล่นได้พักหายใจ
+                StartCoroutine(WaitAndStartNextWave(2f));
+            }
+            else
+            {
+                Debug.Log("🏆 VICTORY! ชนะเกมโปรโตไทป์สมบูรณ์แบบ!");
+                // ตรงนี้สามารถเปิด UI Victory Panel ขึ้นมาได้
+            }
         }
     }
 
-    // ฟังก์ชันรับสัญญาณเมื่อซอมบี้ตาย
-    public void OnEnemyDied()
+    private IEnumerator SystemWaitAndStartNextWave(float delay)
     {
-        activeEnemies--;
-        if (activeEnemies <= 0 && enemyQueue.Count == 0)
-        {
-            Debug.Log($"เคลียร์เวฟ {currentWaveIndex + 1} สำเร็จ! เปิด UI ร้านค้าได้เลย");
-        }
+        yield return new WaitForSeconds(delay);
+        StartCoroutine(StartWave(currentWaveIndex));
     }
+
+    // เผื่อชื่อฟังก์ชันหน่วงเวลาด้านบน
+    private IEnumerator WaitAndStartNextWave(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartCoroutine(StartWave(currentWaveIndex));
+    }
+
 }
