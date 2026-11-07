@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 [System.Serializable]
 public class EnemySpawnPool
@@ -23,16 +25,24 @@ public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance;
 
-    [Header("ตั้งค่าเวฟผสมซอมบี้ (โปรโตไทป์ 2 คืน)")]
+    [Header("ตั้งค่าเวฟ (Night Waves - มี 2 คืน)")]
     [SerializeField] private List<MixedNightWaveData> nightWaves;
     private int currentWaveIndex = 0;
 
     [Header("จุดเกิดศัตรู")]
     [SerializeField] private Transform[] spawnPoints;
 
+    [Header("ตั้งค่าหน้าจอตอนเช้า (Morning Screen)")]
+    [SerializeField] private GameObject morningScreenPanel;
+    [SerializeField] private Button nextNightButton;
+    [SerializeField] private TextMeshProUGUI buttonText;
+
     private int enemiesRemainingToSpawn = 0;
     private int enemiesAliveInScene = 0;
     private bool isSpawningWave = false;
+
+    [Header("ตั้งค่าหน่วงเวลาก่อนจบเวฟ")]
+    [SerializeField] private float delayAfterWave = 2.0f;
 
     private void Awake()
     {
@@ -42,6 +52,14 @@ public class WaveManager : MonoBehaviour
 
     private void Start()
     {
+        if (morningScreenPanel != null) morningScreenPanel.SetActive(false);
+
+        if (nextNightButton != null)
+        {
+            nextNightButton.onClick.RemoveAllListeners();
+            nextNightButton.onClick.AddListener(OnProceedToNextNight);
+        }
+
         StartCoroutine(StartWave(currentWaveIndex));
     }
 
@@ -49,7 +67,6 @@ public class WaveManager : MonoBehaviour
     {
         if (waveIndex >= nightWaves.Count)
         {
-            Debug.Log("🎉 ชนะเกมแล้ว! ผ่านครบทุกเวฟ");
             yield break;
         }
 
@@ -57,7 +74,6 @@ public class WaveManager : MonoBehaviour
         Debug.Log($"--- เริ่มต้น {currentWave.nightName} ---");
 
         enemiesRemainingToSpawn = currentWave.totalEnemiesToSpawn;
-        // กำหนดจำนวนซอมบี้ทั้งหมดที่จะเกิดในเวฟนี้ เพื่อเอาไว้เช็กตอนตาย
         enemiesAliveInScene = currentWave.totalEnemiesToSpawn;
         isSpawningWave = true;
 
@@ -67,10 +83,15 @@ public class WaveManager : MonoBehaviour
             SpawnEnemy(prefabToSpawn);
 
             enemiesRemainingToSpawn--;
-            yield return new WaitForSeconds(currentWave.spawnInterval);
+
+            if (enemiesRemainingToSpawn > 0)
+            {
+                yield return new WaitForSeconds(currentWave.spawnInterval);
+            }
         }
 
         isSpawningWave = false;
+        CheckWaveEnd();
     }
 
     private GameObject GetRandomEnemyFromPool(List<EnemySpawnPool> pool)
@@ -78,10 +99,7 @@ public class WaveManager : MonoBehaviour
         if (pool == null || pool.Count == 0) return null;
 
         float totalWeight = 0f;
-        foreach (var spawn in pool)
-        {
-            totalWeight += spawn.spawnWeight;
-        }
+        foreach (var spawn in pool) totalWeight += spawn.spawnWeight;
 
         float randomValue = Random.Range(0f, totalWeight);
         float currentWeight = 0f;
@@ -89,10 +107,7 @@ public class WaveManager : MonoBehaviour
         foreach (var spawn in pool)
         {
             currentWeight += spawn.spawnWeight;
-            if (randomValue <= currentWeight)
-            {
-                return spawn.enemyPrefab;
-            }
+            if (randomValue <= currentWeight) return spawn.enemyPrefab;
         }
 
         return pool[0].enemyPrefab;
@@ -106,42 +121,64 @@ public class WaveManager : MonoBehaviour
         Instantiate(enemyPrefab, spawnPoints[randomIndex].position, Quaternion.identity);
     }
 
-    // ฟังก์ชันนี้ถูกเรียกจาก BaseEnemy ตอนซอมบี้ตาย
     public void OnEnemyKilled()
     {
         enemiesAliveInScene--;
         Debug.Log($"ซอมบี้ตาย! เหลืออีก: {enemiesAliveInScene} ตัวในฉาก");
+        CheckWaveEnd();
+    }
 
-        // เงื่อนไข: สปอว์นตัวสุดท้ายหมดแล้ว และซอมบี้ในฉากตายจนเกลี้ยงเป็น 0
-        if (!isSpawningWave && enemiesRemainingToSpawn <= 0 && enemiesAliveInScene <= 0)
+    public void CheckWaveEnd()
+    {
+        if (enemiesAliveInScene <= 0 && !isSpawningWave)
         {
-            currentWaveIndex++;
-
-            if (currentWaveIndex < nightWaves.Count)
-            {
-                Debug.Log($"✨ เคลียร์เวฟ {currentWaveIndex} สำเร็จ! กำลังไปคืนถัดไป...");
-                // หน่วงเวลาสัก 2 วินาทีก่อนเริ่มเวฟใหม่ ให้ผู้เล่นได้พักหายใจ
-                StartCoroutine(WaitAndStartNextWave(2f));
-            }
-            else
-            {
-                Debug.Log("🏆 VICTORY! ชนะเกมโปรโตไทป์สมบูรณ์แบบ!");
-                // ตรงนี้สามารถเปิด UI Victory Panel ขึ้นมาได้
-            }
+            StartCoroutine(WaitAndEndWaveCoroutine());
         }
     }
 
-    private IEnumerator SystemWaitAndStartNextWave(float delay)
+    private IEnumerator WaitAndEndWaveCoroutine()
     {
-        yield return new WaitForSeconds(delay);
-        StartCoroutine(StartWave(currentWaveIndex));
+        Debug.Log("เคลียร์ซอมบี้หมดแล้ว! รอหน่วงเวลาแป๊บนึง...");
+        yield return new WaitForSeconds(delayAfterWave);
+
+        // 💡 เช็กว่าเป็นคืนสุดท้าย (Night 2 / Index 1) หรือยัง
+        if (currentWaveIndex >= nightWaves.Count - 1)
+        {
+            // ถ้าจบ Night 2 แล้ว ไม่ต้องเปิดหน้าจอตอนเช้า แค่ปริ้นต์บอกใน Console ว่าชนะ
+            Debug.Log("🎉 VICTORY! ชนะเกมแล้ว! ผ่านครบทุกเวฟเรียบร้อย!");
+        }
+        else
+        {
+            // ถ้ายังเป็น Night 1 อยู่ ให้เปิดหน้าจอตอนเช้าเพื่อไปต่อ Night 2 ปกติ
+            ShowMorningScreen();
+        }
     }
 
-    // เผื่อชื่อฟังก์ชันหน่วงเวลาด้านบน
-    private IEnumerator WaitAndStartNextWave(float delay)
+    private void ShowMorningScreen()
     {
-        yield return new WaitForSeconds(delay);
-        StartCoroutine(StartWave(currentWaveIndex));
+        if (morningScreenPanel != null) morningScreenPanel.SetActive(true);
+
+        // 💡 สูตรคำนวณเลขเวฟถัดไปที่ถูกต้องเป๊ะ:
+        // - จบ Index 0 (คืน 1) -> currentWaveIndex (0) + 2 = แสดงผล "Night 2"
+        // - จบ Index 1 (คืน 2) -> currentWaveIndex (1) + 2 = แสดงผล "Night 3"
+        int nextNightNumber = currentWaveIndex + 2;
+
+        if (buttonText != null)
+        {
+            buttonText.text = $"Night {nextNightNumber}";
+        }
+
+        Time.timeScale = 0f;
     }
 
+    public void OnProceedToNextNight()
+    {
+        if (morningScreenPanel != null) morningScreenPanel.SetActive(false);
+        Time.timeScale = 1f;
+
+        // ขยับไปเวฟถัดไป (Night 2)
+        currentWaveIndex++;
+
+        StartCoroutine(StartWave(currentWaveIndex));
+    }
 }

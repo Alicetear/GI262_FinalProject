@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
   optionsPanel: {fileID: 466032960}
-  gameSceneName: Gameplay
+  gameSceneName: Outpost_7
 --- !u!1 &185903582
 GameObject:
   m_ObjectHideFlags: 0

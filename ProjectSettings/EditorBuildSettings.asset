@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Gameplay.unity
     guid: 4d11a3f1f4fb8844cb4a2effd90cacc6
+  - enabled: 1
+    path: Assets/Scenes/Outpost_7.unity
+    guid: caea701dcaae1bb4c85a628d5978d2c8
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

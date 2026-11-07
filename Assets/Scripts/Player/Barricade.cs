@@ -2,60 +2,62 @@ using UnityEngine;
 
 public class Barricade : MonoBehaviour
 {
-    [Header("ตั้งค่าเลือดกำแพง")]
-    [SerializeField] private int maxBarricadeHealth = 100;
+    [Header("สเตตัสกำแพง")]
+    public int maxHealth = 1000;
     private int currentHealth;
 
-    [Header("สไปรต์กำแพงตามสภาพความเสียหาย")]
-    [SerializeField] private SpriteRenderer wallSpriteRenderer;
-    [SerializeField] private Sprite stateNormal;   // เลือด 70% ขึ้นไป
-    [SerializeField] private Sprite stateDamaged; // เลือด 40% - 69%
-    [SerializeField] private Sprite stateBroken;  // เลือดต่ำกว่า 40%
+    [Header("ระบบสีกำแพง (ซ้าย=พัง/สีแดง, ขวา=เต็ม/สีเขียว)")]
+    // ตัวแปรนี้จะสร้างแถบสีใน Inspector ให้เราปรับแต่งได้ง่ายๆ
+    [SerializeField] private Gradient healthGradient;
+    private SpriteRenderer spriteRenderer;
+
+    [Header("ระบบจบเกม")]
+    [SerializeField] private GameObject gameOverPanel; // ลาก UI Game Over มาใส่
 
     private void Start()
     {
-        currentHealth = maxBarricadeHealth;
-        UpdateBarricadeVisual();
+        currentHealth = maxHealth;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        UpdateWallColor(); // เซ็ตสีเริ่มต้นตอนเริ่มเกม
     }
 
     public void TakeDamage(int damageAmount)
     {
-        currentHealth -= damageAmount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxBarricadeHealth);
+        if (currentHealth <= 0) return; // ถ้าพังแล้วไม่ต้องรับดาเมจเพิ่ม
 
-        Debug.Log($"กำแพงฐานโดนโจมตี! เลือดเหลือ: {currentHealth} / {maxBarricadeHealth}");
-        UpdateBarricadeVisual();
+        currentHealth -= damageAmount;
+        Debug.Log($"กำแพงโดนตี! เลือดเหลือ: {currentHealth}/{maxHealth}");
+
+        UpdateWallColor(); // อัปเดตสีทุกครั้งที่โดนตี
 
         if (currentHealth <= 0)
         {
-            BarricadeDestroyed();
+            TriggerGameOver();
         }
     }
 
-    // ฟังก์ชันเช็กและสลับภาพ PNG ตามเลือดที่เหลือ
-    private void UpdateBarricadeVisual()
+    // ฟังก์ชันคำนวณและเปลี่ยนสีกำแพงตามเปอร์เซ็นต์เลือด
+    private void UpdateWallColor()
     {
-        if (wallSpriteRenderer == null) return;
+        if (spriteRenderer == null) return;
 
-        float healthPercentage = (float)currentHealth / maxBarricadeHealth;
+        // 1. หาเปอร์เซ็นต์เลือด (0.0 ถึง 1.0)
+        float healthPercent = (float)currentHealth / maxHealth;
 
-        if (healthPercentage > 0.69f)
-        {
-            wallSpriteRenderer.sprite = stateNormal;
-        }
-        else if (healthPercentage > 0.39f)
-        {
-            wallSpriteRenderer.sprite = stateDamaged;
-        }
-        else
-        {
-            wallSpriteRenderer.sprite = stateBroken;
-        }
+        // 2. ใช้คำสั่ง Evaluate ดูดสีจาก Gradient ตามเปอร์เซ็นต์
+        // (ถ้า healthPercent = 1 มันจะดึงสีขวาสุด, ถ้า = 0.5 ดึงสีตรงกลาง)
+        spriteRenderer.color = healthGradient.Evaluate(healthPercent);
     }
 
-    private void BarricadeDestroyed()
+    private void TriggerGameOver()
     {
-        Debug.Log("Game Over! กำแพงฐานพังทลายลงแล้ว!");
-        // โค้ดเรียกหน้าจอ Game Over
+        Debug.Log("แนวป้องกันแตก! GAME OVER!");
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true); // เปิดหน้าจอพ่ายแพ้
+        }
+
+        Time.timeScale = 0f; // หยุดเวลาในเกมทั้งหมด
     }
 }

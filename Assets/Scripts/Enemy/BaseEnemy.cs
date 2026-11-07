@@ -8,6 +8,13 @@ public class BaseEnemy : MonoBehaviour
     [SerializeField] protected float moveSpeed = 3f;
     [SerializeField] protected int attackDamage = 10;
 
+    // --- เพิ่มตัวแปรสำหรับการโจมตีต่อเนื่อง ---
+    [Header("ตั้งค่าการโจมตี")]
+    [SerializeField] protected float attackCooldown = 1.5f; // ความเร็วในการตี (วินาที/ครั้ง)
+    private float currentAttackTimer = 0f; // ตัวนับเวลา
+    private Barricade targetBarricade = null; // เก็บเป้าหมายกำแพงที่กำลังตีอยู่
+    // ------------------------------------
+
     protected bool hasReachedWall = false;
     private Rigidbody2D rb;
 
@@ -17,30 +24,59 @@ public class BaseEnemy : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    // เปลี่ยนมาใช้ FixedUpdate สำหรับการเคลื่อนที่ที่ยุ่งเกี่ยวกับ Rigidbody 2D
     protected virtual void FixedUpdate()
     {
         if (!hasReachedWall && rb != null)
         {
-            // ใช้ MovePosition ขยับตามฟิสิกส์ จะได้ไม่เดินทะลุกำแพง
             Vector2 newPos = rb.position + Vector2.right * moveSpeed * Time.fixedDeltaTime;
             rb.MovePosition(newPos);
         }
     }
 
-    // ฟังก์ชันตรวจจับการชนแบบ OnCollisionEnter2D
+    // เพิ่มฟังก์ชัน Update สำหรับนับเวลาตีตอนที่เกาะกำแพงอยู่
+    protected virtual void Update()
+    {
+        // ถ้าชนกำแพงแล้ว และมีเป้าหมายเป็นกำแพง
+        if (hasReachedWall && targetBarricade != null)
+        {
+            // เริ่มนับเวลาถอยหลัง
+            currentAttackTimer -= Time.deltaTime;
+
+            // ถ้าเวลาหมด (ถึงรอบตี)
+            if (currentAttackTimer <= 0f)
+            {
+                AttackBarricade(); // สั่งโจมตี
+                currentAttackTimer = attackCooldown; // รีเซ็ตเวลารอรอบต่อไป
+            }
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // เช็กว่าชนกับวัตถุที่มี Tag เป็น "Wall" หรือไม่
         if (collision.gameObject.CompareTag("Wall"))
         {
-            hasReachedWall = true; // สั่งให้หยุดเดินทันที
+            hasReachedWall = true;
 
-            Barricade barricade = collision.gameObject.GetComponent<Barricade>();
-            if (barricade != null)
+            // เก็บตัวแปร Barricade ไว้โจมตีต่อเนื่องใน Update
+            targetBarricade = collision.gameObject.GetComponent<Barricade>();
+
+            if (targetBarricade != null)
             {
-                barricade.TakeDamage(attackDamage); // ทำดาเมจใส่กำแพง
+                // ตีครั้งแรกทันทีที่ชน
+                AttackBarricade();
+                // เซ็ตเวลาให้รอตีรอบถัดไป
+                currentAttackTimer = attackCooldown;
             }
+        }
+    }
+
+    // ฟังก์ชันโจมตีกำแพง
+    private void AttackBarricade()
+    {
+        if (targetBarricade != null)
+        {
+            targetBarricade.TakeDamage(attackDamage);
+            Debug.Log($"{gameObject.name} กำลังตีกำแพง! ดาเมจ: {attackDamage}");
         }
     }
 
@@ -55,4 +91,5 @@ public class BaseEnemy : MonoBehaviour
         if (WaveManager.Instance != null) WaveManager.Instance.OnEnemyKilled();
         Destroy(gameObject);
     }
+
 }
