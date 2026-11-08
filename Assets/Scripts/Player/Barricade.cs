@@ -2,33 +2,43 @@ using UnityEngine;
 
 public class Barricade : MonoBehaviour
 {
+    public static Barricade Instance { get; private set; }
+
     [Header("สเตตัสกำแพง")]
     public int maxHealth = 1000;
     private int currentHealth;
 
     [Header("ระบบสีกำแพง (ซ้าย=พัง/สีแดง, ขวา=เต็ม/สีเขียว)")]
-    // ตัวแปรนี้จะสร้างแถบสีใน Inspector ให้เราปรับแต่งได้ง่ายๆ
     [SerializeField] private Gradient healthGradient;
     private SpriteRenderer spriteRenderer;
 
     [Header("ระบบจบเกม")]
     [SerializeField] private GameObject gameOverPanel; // ลาก UI Game Over มาใส่
 
+    public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
+
     private void Start()
     {
         currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
-        UpdateWallColor(); // เซ็ตสีเริ่มต้นตอนเริ่มเกม
+        UpdateWallColor();
     }
 
     public void TakeDamage(int damageAmount)
     {
-        if (currentHealth <= 0) return; // ถ้าพังแล้วไม่ต้องรับดาเมจเพิ่ม
+        if (currentHealth <= 0) return;
 
         currentHealth -= damageAmount;
+        if (currentHealth < 0) currentHealth = 0;
         Debug.Log($"กำแพงโดนตี! เลือดเหลือ: {currentHealth}/{maxHealth}");
 
-        UpdateWallColor(); // อัปเดตสีทุกครั้งที่โดนตี
+        UpdateWallColor();
 
         if (currentHealth <= 0)
         {
@@ -36,16 +46,26 @@ public class Barricade : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันคำนวณและเปลี่ยนสีกำแพงตามเปอร์เซ็นต์เลือด
+    public void RepairBarricade(int amount)
+    {
+        if (currentHealth >= maxHealth) return;
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        Debug.Log($"ซ่อมแซมกำแพงแล้ว! เลือดปัจจุบัน: {currentHealth}/{maxHealth}");
+        UpdateWallColor();
+    }
+
+    public void UpgradeMaxHP(int amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount;
+        Debug.Log($"อัปเกรดความจุเลือดกำแพง! เลือดสูงสุดใหม่: {maxHealth}");
+        UpdateWallColor();
+    }
+
     private void UpdateWallColor()
     {
         if (spriteRenderer == null) return;
-
-        // 1. หาเปอร์เซ็นต์เลือด (0.0 ถึง 1.0)
-        float healthPercent = (float)currentHealth / maxHealth;
-
-        // 2. ใช้คำสั่ง Evaluate ดูดสีจาก Gradient ตามเปอร์เซ็นต์
-        // (ถ้า healthPercent = 1 มันจะดึงสีขวาสุด, ถ้า = 0.5 ดึงสีตรงกลาง)
+        float healthPercent = maxHealth > 0 ? (float)currentHealth / maxHealth : 0f;
         spriteRenderer.color = healthGradient.Evaluate(healthPercent);
     }
 
@@ -55,9 +75,14 @@ public class Barricade : MonoBehaviour
 
         if (gameOverPanel != null)
         {
-            gameOverPanel.SetActive(true); // เปิดหน้าจอพ่ายแพ้
+            gameOverPanel.SetActive(true);
         }
 
-        Time.timeScale = 0f; // หยุดเวลาในเกมทั้งหมด
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.TriggerGameOver();
+        }
+
+        Time.timeScale = 0f;
     }
 }

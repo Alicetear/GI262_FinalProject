@@ -3,14 +3,27 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed = 15f;
-    [SerializeField] private int damage = 10;
+
     [Header("ตั้งค่าความแรงกระสุน")]
-    // 💡 สิ่งที่ขาดไปคือบรรทัดนี้ครับ! ประกาศตัวแปรเก็บค่าดาเมจไว้ด้านบนสุด
     [SerializeField] private int bulletDamage = 10;
+
+    [Header("อายุขัยกระสุน (วินาที)")]
+    [SerializeField] private float lifeTime = 4f;
+
+    private void Start()
+    {
+        Destroy(gameObject, lifeTime);
+    }
+
     private void Update()
     {
-        // เปลี่ยนจาก right เป็น left กระสุนจะพุ่งออกไปหาเป้าหมาย
+        // กระสุนพุ่งออกไปทางซ้าย (หาเป้าหมายซอมบี้)
         transform.Translate(Vector3.left * speed * Time.deltaTime);
+    }
+
+    public void SetDamage(int dmg)
+    {
+        bulletDamage = dmg;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -20,10 +33,8 @@ public class Bullet : MonoBehaviour
 
         if (targetHitbox != null)
         {
-            // พอเราสร้างตัวแปรด้านบนแล้ว บรรทัดนี้จะทำงานได้ 100%
             targetHitbox.TakeHit(bulletDamage);
             Destroy(gameObject);
         }
     }
-
 }
