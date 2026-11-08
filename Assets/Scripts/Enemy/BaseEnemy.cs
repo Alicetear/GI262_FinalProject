@@ -8,12 +8,15 @@ public class BaseEnemy : MonoBehaviour
     [SerializeField] protected float moveSpeed = 3f;
     [SerializeField] protected int attackDamage = 10;
 
-    // --- เพิ่มตัวแปรสำหรับการโจมตีต่อเนื่อง ---
     [Header("ตั้งค่าการโจมตี")]
     [SerializeField] protected float attackCooldown = 1.5f; // ความเร็วในการตี (วินาที/ครั้ง)
     private float currentAttackTimer = 0f; // ตัวนับเวลา
     private Barricade targetBarricade = null; // เก็บเป้าหมายกำแพงที่กำลังตีอยู่
-    // ------------------------------------
+
+    [Header("รางวัลเมื่อกำจัดได้ (Rewards)")]
+    [SerializeField] protected int rewardCash = 15;
+    [SerializeField] protected int rewardScrap = 5;
+    [SerializeField] protected int rewardScore = 100;
 
     protected bool hasReachedWall = false;
     private Rigidbody2D rb;
@@ -33,20 +36,16 @@ public class BaseEnemy : MonoBehaviour
         }
     }
 
-    // เพิ่มฟังก์ชัน Update สำหรับนับเวลาตีตอนที่เกาะกำแพงอยู่
     protected virtual void Update()
     {
-        // ถ้าชนกำแพงแล้ว และมีเป้าหมายเป็นกำแพง
         if (hasReachedWall && targetBarricade != null)
         {
-            // เริ่มนับเวลาถอยหลัง
             currentAttackTimer -= Time.deltaTime;
 
-            // ถ้าเวลาหมด (ถึงรอบตี)
             if (currentAttackTimer <= 0f)
             {
-                AttackBarricade(); // สั่งโจมตี
-                currentAttackTimer = attackCooldown; // รีเซ็ตเวลารอรอบต่อไป
+                AttackBarricade();
+                currentAttackTimer = attackCooldown;
             }
         }
     }
@@ -56,21 +55,16 @@ public class BaseEnemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Wall"))
         {
             hasReachedWall = true;
-
-            // เก็บตัวแปร Barricade ไว้โจมตีต่อเนื่องใน Update
             targetBarricade = collision.gameObject.GetComponent<Barricade>();
 
             if (targetBarricade != null)
             {
-                // ตีครั้งแรกทันทีที่ชน
                 AttackBarricade();
-                // เซ็ตเวลาให้รอตีรอบถัดไป
                 currentAttackTimer = attackCooldown;
             }
         }
     }
 
-    // ฟังก์ชันโจมตีกำแพง
     private void AttackBarricade()
     {
         if (targetBarricade != null)
@@ -88,8 +82,18 @@ public class BaseEnemy : MonoBehaviour
 
     protected virtual void Die()
     {
-        if (WaveManager.Instance != null) WaveManager.Instance.OnEnemyKilled();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddCurrency(CurrencyType.Cash, rewardCash);
+            GameManager.Instance.AddCurrency(CurrencyType.Scrap, rewardScrap);
+            GameManager.Instance.AddScore(rewardScore);
+        }
+
+        if (WaveManager.Instance != null)
+        {
+            WaveManager.Instance.OnEnemyKilled(this);
+        }
+
         Destroy(gameObject);
     }
-
 }
