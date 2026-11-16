@@ -289,6 +289,9 @@ MonoBehaviour:
   moveSpeed: 3
   attackDamage: 10
   attackCooldown: 1.5
+  rewardCash: 15
+  rewardScrap: 8
+  rewardScore: 100
   runnerSprite: {fileID: 0}
 --- !u!50 &-7075722831124032278
 Rigidbody2D:

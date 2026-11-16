@@ -140,6 +140,9 @@ MonoBehaviour:
   moveSpeed: 3
   attackDamage: 10
   attackCooldown: 1.5
+  rewardCash: 10
+  rewardScrap: 5
+  rewardScore: 100
   walkerSprite: {fileID: 21300000, guid: 772bf5cf8b2e4204fa933f2a9639b6c2, type: 3}
 --- !u!61 &-1727750709089271409
 BoxCollider2D:

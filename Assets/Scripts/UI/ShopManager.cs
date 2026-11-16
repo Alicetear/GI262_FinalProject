@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class ShopManager : MonoBehaviour
@@ -22,7 +23,12 @@ public class ShopManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cashText;
     [SerializeField] private TextMeshProUGUI scrapText;
     [SerializeField] private TextMeshProUGUI rationsText;
+
+    [Header("UI แสดงเลือดกำแพง (Wall Health)")]
+    [Tooltip("ข้อความแสดงเลือดกำแพง เช่น Wall HP: 750 / 1000 (75%)")]
     [SerializeField] private TextMeshProUGUI barricadeHpText;
+    [Tooltip("แถบ Slider แสดงเลือดกำแพง (ใส่หรือไม่ใส่ก็ได้)")]
+    [SerializeField] private Slider barricadeHpSlider;
 
     private void Awake()
     {
@@ -50,11 +56,13 @@ public class ShopManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // อัปเดตข้อมูลเลือดกำแพงและเงินทันทีที่หน้าต่างร้านค้าเปิดขึ้นมาตอนเช้า
         UpdateShopUI();
     }
 
     public void UpdateShopUI()
     {
+        // 1. อัปเดตตัวเลขเงิน
         if (GameManager.Instance != null)
         {
             if (cashText != null) cashText.text = $"Cash: ${GameManager.Instance.Cash}";
@@ -62,74 +70,127 @@ public class ShopManager : MonoBehaviour
             if (rationsText != null) rationsText.text = $"Rations: {GameManager.Instance.Rations}";
         }
 
+        // 2. อัปเดตเลือดกำแพง
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
-        if (wall != null && barricadeHpText != null)
+        if (wall != null)
         {
-            barricadeHpText.text = $"Wall HP: {wall.CurrentHealth}/{wall.MaxHealth}";
+            float hpPercent = wall.MaxHealth > 0 ? (float)wall.CurrentHealth / wall.MaxHealth : 0f;
+            int percentInt = Mathf.RoundToInt(hpPercent * 100f);
+
+            // อัปเดตข้อความตัวเลข
+            if (barricadeHpText != null)
+            {
+                barricadeHpText.text = $"Wall HP: {wall.CurrentHealth} / {wall.MaxHealth} ({percentInt}%)";
+
+                // เปลี่ยนสีข้อความตามสถานะเลือด (เขียว = ปลอดภัย, ส้ม = ปานกลาง, แดง = วิกฤต)
+                if (percentInt > 60)
+                    barricadeHpText.color = new Color(0.2f, 1f, 0.2f); // เขียว
+                else if (percentInt > 30)
+                    barricadeHpText.color = new Color(1f, 0.8f, 0.1f); // ส้มเหลือง
+                else
+                    barricadeHpText.color = new Color(1f, 0.2f, 0.2f); // แดง
+            }
+
+            // อัปเดตแถบ Slider (ถ้ามี)
+            if (barricadeHpSlider != null)
+            {
+                barricadeHpSlider.value = hpPercent;
+            }
         }
     }
 
-    public bool RepairBarricadeWithScrap()
+    // 1. ซ่อมแซมกำแพงด้วย Scrap (void เพื่อให้ปุ่ม UI OnClick มองเห็นได้)
+    public void RepairBarricadeWithScrap()
     {
+        Debug.Log("[ShopManager] >>> ผู้เล่นกดปุ่มซ่อมกำแพง <<<");
+
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
-        if (wall == null || GameManager.Instance == null) return false;
+        if (wall == null)
+        {
+            Debug.LogError("[ShopManager] ผิดพลาด: ไม่พบ Barricade (กำแพง) ในฉาก!");
+            return;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[ShopManager] ผิดพลาด: ไม่พบ GameManager ในฉาก!");
+            return;
+        }
 
         if (wall.CurrentHealth >= wall.MaxHealth)
         {
-            Debug.Log("กำแพงเลือดเต็มอยู่แล้ว!");
-            return false;
+            Debug.LogWarning($"[ShopManager] ซ่อมไม่ได้: เลือดกำแพงเต็มอยู่แล้ว! ({wall.CurrentHealth} / {wall.MaxHealth})");
+            return;
         }
 
         if (GameManager.Instance.SpendCurrency(CurrencyType.Scrap, repairScrapCost))
         {
             wall.RepairBarricade(repairHealthAmount);
-            UpdateShopUI();
-            return true;
+            UpdateShopUI(); // อัปเดตหน้าจอทันทีหลังจากซ่อม
+            Debug.Log($"[ShopManager] ซ่อมกำแพงสำเร็จ! เลือดเพิ่มเป็น: {wall.CurrentHealth} / {wall.MaxHealth} (ใช้ Scrap: {repairScrapCost})");
         }
-
-        return false;
+        else
+        {
+            Debug.LogWarning($"[ShopManager] ซ่อมไม่ได้: Scrap ไม่พอ! (คุณมี {GameManager.Instance.Scrap} Scrap แต่ต้องใช้ {repairScrapCost} Scrap)");
+        }
     }
 
-    public bool UpgradeBarricadeMaxHPWithScrap()
+    // 2. อัปเกรด Max HP กำแพงด้วย Scrap
+    public void UpgradeBarricadeMaxHPWithScrap()
     {
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
-        if (wall == null || GameManager.Instance == null) return false;
+        if (wall == null || GameManager.Instance == null) return;
 
         if (GameManager.Instance.SpendCurrency(CurrencyType.Scrap, upgradeWallScrapCost))
         {
             wall.UpgradeMaxHP(upgradeWallHealthAmount);
             UpdateShopUI();
-            return true;
+            Debug.Log($"อัปเกรด Max HP สำเร็จ! +{upgradeWallHealthAmount} Max HP (ใช้ {upgradeWallScrapCost} Scrap)");
         }
-
-        return false;
+        else
+        {
+            Debug.Log("Scrap ไม่พอสำหรับอัปเกรด Max HP!");
+        }
     }
 
-    public bool UpgradeWeapon(Weapon weapon)
+    // 3. อัปเกรดสถานะปืน (Damage/Mag/Reload) ด้วย Cash
+    public void UpgradeEquippedWeapon()
     {
-        if (weapon == null || GameManager.Instance == null) return false;
+        Equipment equipment = FindAnyObjectByType<Equipment>();
+        if (equipment != null && equipment.CurrentWeapon != null)
+        {
+            UpgradeWeapon(equipment.CurrentWeapon);
+        }
+    }
+
+    public void UpgradeWeapon(Weapon weapon)
+    {
+        if (weapon == null || GameManager.Instance == null) return;
 
         int cost = weapon.GetNextUpgradeCost();
-        if (cost <= 0) return false;
+        if (cost <= 0) return;
 
         if (GameManager.Instance.SpendCurrency(CurrencyType.Cash, cost))
         {
-            bool success = weapon.Upgrade();
+            weapon.Upgrade();
             UpdateShopUI();
-            return success;
+            Debug.Log($"อัปเกรดปืน {weapon.Stats?.weaponName ?? weapon.name} สำเร็จ! Level: {weapon.currentLevel}");
         }
-
-        return false;
+        else
+        {
+            Debug.Log("Cash ไม่พอสำหรับอัปเกรดปืน!");
+        }
     }
 
-    public bool RecruitCompanion()
+    // 4. จ้างเพื่อน AI มาประจำการ (สูงสุด 3 คน) ด้วย Rations
+    public void RecruitCompanion()
     {
-        if (GameManager.Instance == null || companionPrefab == null) return false;
+        if (GameManager.Instance == null || companionPrefab == null) return;
 
         if (companionStations == null || activeCompanions.Count >= companionStations.Length)
         {
             Debug.Log("เพื่อนร่วมทีมเต็มแล้ว! (สูงสุด 3 คน)");
-            return false;
+            return;
         }
 
         if (GameManager.Instance.SpendCurrency(CurrencyType.Rations, recruitRationCost))
@@ -139,10 +200,10 @@ public class ShopManager : MonoBehaviour
             activeCompanions.Add(companion);
             Debug.Log($"จ้างเพื่อน AI สำเร็จ! ประจำการตำแหน่งที่ {activeCompanions.Count}");
             UpdateShopUI();
-            return true;
         }
-
-        return false;
+        else
+        {
+            Debug.Log("Rations ไม่พอสำหรับจ้างเพื่อน AI!");
+        }
     }
 }
-

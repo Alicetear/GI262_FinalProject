@@ -65,6 +65,11 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // ให้ค่าเริ่มต้นป้องกันค่า 0 จาก Inspector ใน Scene
+            if (cash < 200) cash = 200;
+            if (scrap < 50) scrap = 50;
+            if (rations < 1) rations = 1;
         }
         else if (instance != this)
         {

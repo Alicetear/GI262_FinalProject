@@ -21,11 +21,12 @@ public class Barricade : MonoBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
+        currentHealth = maxHealth;
     }
 
     private void Start()
     {
-        currentHealth = maxHealth;
+        if (currentHealth <= 0) currentHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
         UpdateWallColor();
     }

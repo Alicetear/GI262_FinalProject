@@ -316,6 +316,9 @@ MonoBehaviour:
   moveSpeed: 3
   attackDamage: 10
   attackCooldown: 1.5
+  rewardCash: 30
+  rewardScrap: 20
+  rewardScore: 100
   fatMoveSpeed: 1
   fatMaxHealth: 100
   fatAttackDamage: 25
