@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class MainMenuController : MonoBehaviour
 {
     [Header("UI Panels")]
+    [SerializeField] private GameObject menuFrame;
     public GameObject optionsPanel;
 
     [Header("Scene Settings")]
@@ -27,6 +28,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (optionsPanel != null)
         {
+            if (menuFrame != null) menuFrame.SetActive(false);
             optionsPanel.SetActive(true);
         }
     }
@@ -35,6 +37,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (optionsPanel != null)
         {
+            if (menuFrame != null) menuFrame.SetActive(true);
             optionsPanel.SetActive(false);
         }
     }
