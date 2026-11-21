@@ -10,6 +10,7 @@ public class FatZombie : BaseEnemy
 
     protected override void Start()
     {
+        attackType = EnemyAttackType.Melee;
         // 1. นำค่าเฉพาะตัวของซอมบี้อ้วน ไปทับค่าพื้นฐานใน BaseEnemy
         moveSpeed = fatMoveSpeed;
         maxHealth = fatMaxHealth;

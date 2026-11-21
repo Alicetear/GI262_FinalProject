@@ -1,4 +1,55 @@
+using System.Collections.Generic;
 using UnityEngine;
+
+public enum WeaponBehaviorType
+{
+    Single, // โจมตีเป้าหมายเดี่ยว (Direct Hit)
+    AOE     // ระเบิดดาเมจเป็นวงกว้าง (Area of Effect / Splash Damage)
+}
+
+[System.Serializable]
+public struct WeaponStatus
+{
+    public string weaponName;
+    public int level;
+    public int damage;
+    public int maxAmmo;
+    public float fireInterval;
+    public float reloadTime;
+    public int upgradeCost;
+    public WeaponBehaviorType behaviorType;
+    public float aoeRadius;
+
+    public WeaponStatus(string weaponName, int level, int damage, int maxAmmo, float fireInterval, float reloadTime, int upgradeCost, WeaponBehaviorType behaviorType = WeaponBehaviorType.Single, float aoeRadius = 0f)
+    {
+        this.weaponName = weaponName;
+        this.level = level;
+        this.damage = damage;
+        this.maxAmmo = maxAmmo;
+        this.fireInterval = fireInterval;
+        this.reloadTime = reloadTime;
+        this.upgradeCost = upgradeCost;
+        this.behaviorType = behaviorType;
+        this.aoeRadius = aoeRadius;
+    }
+
+    // แปลงโครงสร้าง Struct เป็น Dictionary ตามโจทย์อาจารย์: "ปรับ weapon status เป็นโครงสร้างแบบ dictionary"
+    public Dictionary<string, object> ToDictionary()
+    {
+        return new Dictionary<string, object>
+        {
+            { "WeaponName", weaponName },
+            { "Level", level },
+            { "Damage", damage },
+            { "MaxAmmo", maxAmmo },
+            { "FireInterval", fireInterval },
+            { "ReloadTime", reloadTime },
+            { "UpgradeCost", upgradeCost },
+            { "BehaviorType", behaviorType },
+            { "AOERadius", aoeRadius }
+        };
+    }
+}
 
 [CreateAssetMenu(fileName = "NewWeaponStats", menuName = "Outpost7/Weapon Stats")]
 public class WeaponStats : ScriptableObject
@@ -6,6 +57,10 @@ public class WeaponStats : ScriptableObject
     [Header("ข้อมูลอาวุธ")]
     public string weaponName = "Pistol";
     public int maxLevel = 5;
+
+    [Header("พฤติกรรมอาวุธ (Weapon Behavior: Single vs AOE)")]
+    public WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
+    public float aoeRadius = 2.5f;
 
     [Header("พลังโจมตี (Damage Scaling)")]
     public int baseDamage = 10;
@@ -50,6 +105,21 @@ public class WeaponStats : ScriptableObject
     public int GetUpgradeCost(int level)
     {
         return Mathf.RoundToInt(baseUpgradeCost * Mathf.Pow(costMultiplier, level - 1));
+    }
+
+    public WeaponStatus GenerateStatus(int level)
+    {
+        return new WeaponStatus(
+            weaponName,
+            level,
+            GetDamage(level),
+            GetMaxAmmo(level),
+            GetFireInterval(level),
+            GetReloadTime(level),
+            GetUpgradeCost(level),
+            behaviorType,
+            aoeRadius
+        );
     }
 }
 

@@ -8,6 +8,7 @@ public class RunnerEnemy : BaseEnemy
 
     protected override void Start()
     {
+        attackType = EnemyAttackType.Melee;
         base.Start();
 
         // เซ็ตสเตตัสความเร็วและเลือดของ Runner

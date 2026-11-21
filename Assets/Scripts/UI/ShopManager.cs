@@ -8,7 +8,7 @@ public class ShopManager : MonoBehaviour
     public static ShopManager Instance { get; private set; }
 
     [Header("การตั้งค่าซ่อมและอัปเกรดกำแพง (ใช้ Scrap)")]
-    [SerializeField] private int repairScrapCost = 20;
+    [SerializeField] private int repairScrapCost = 10;
     [SerializeField] private int repairHealthAmount = 250;
     [SerializeField] private int upgradeWallScrapCost = 50;
     [SerializeField] private int upgradeWallHealthAmount = 300;

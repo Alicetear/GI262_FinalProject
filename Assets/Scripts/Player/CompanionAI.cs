@@ -55,7 +55,7 @@ public class CompanionAI : MonoBehaviour
         for (int i = 0; i < enemies.Count; i++)
         {
             BaseEnemy enemy = enemies[i];
-            if (enemy == null) continue;
+            if (enemy == null || enemy.IsDead) continue;
 
             float distSqr = (enemy.transform.position - myPos).sqrMagnitude;
             if (distSqr < minDistanceSqr)

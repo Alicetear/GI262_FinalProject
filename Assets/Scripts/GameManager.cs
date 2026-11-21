@@ -19,11 +19,21 @@ public enum GameState
 public class GameManager : MonoBehaviour
 {
     private static GameManager instance;
+    private static bool isQuitting = false;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticState()
+    {
+        isQuitting = false;
+        instance = null;
+    }
 
     public static GameManager Instance
     {
         get
         {
+            if (isQuitting) return null;
+
             if (instance == null)
             {
                 instance = FindAnyObjectByType<GameManager>();
@@ -39,9 +49,9 @@ public class GameManager : MonoBehaviour
     }
 
     [Header("ระบบเศรษฐกิจ (3 Currencies)")]
-    [SerializeField] private int cash = 200;      // ใช้ซื้อปืน/อัปเกรดปืน
-    [SerializeField] private int scrap = 50;      // ใช้ซ่อมแซม/อัปเกรดกำแพง
-    [SerializeField] private int rations = 1;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
+    [SerializeField] private int cash = 0;        // ใช้ซื้อปืน/อัปเกรดปืน (เริ่มต้น $0)
+    [SerializeField] private int scrap = 0;       // ใช้ซ่อมแซม/อัปเกรดกำแพง
+    [SerializeField] private int rations = 0;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
 
     [Header("คะแนนและคืนปัจจุบัน")]
     [SerializeField] private int score = 0;
@@ -65,16 +75,16 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-
-            // ให้ค่าเริ่มต้นป้องกันค่า 0 จาก Inspector ใน Scene
-            if (cash < 200) cash = 200;
-            if (scrap < 50) scrap = 50;
-            if (rations < 1) rations = 1;
         }
         else if (instance != this)
         {
             Destroy(gameObject);
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        isQuitting = true;
     }
 
     public void AddCurrency(CurrencyType type, int amount)

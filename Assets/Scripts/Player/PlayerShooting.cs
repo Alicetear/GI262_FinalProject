@@ -11,6 +11,14 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private float fireRate = 0.25f; 
 
     private float nextFireTime = 0f;
+    private Equipment playerEquipment;
+    private Weapon attachedWeapon;
+
+    private void Start()
+    {
+        playerEquipment = GetComponent<Equipment>();
+        attachedWeapon = GetComponentInChildren<Weapon>();
+    }
 
     private void Update()
     {
@@ -24,6 +32,19 @@ public class PlayerShooting : MonoBehaviour
 
     private void Shoot()
     {
+        // ถ้ามี Weapon ที่ติดตั้งอยู่ ให้ยิงผ่าน Weapon เพื่อใช้ระบบ Struct + Dictionary + AOE/Single
+        if (playerEquipment != null && playerEquipment.CurrentWeapon != null)
+        {
+            playerEquipment.CurrentWeapon.Fire();
+            return;
+        }
+
+        if (attachedWeapon != null)
+        {
+            attachedWeapon.Fire();
+            return;
+        }
+
         if (firePoint == null)
         {
             Debug.LogWarning("ลืมใส่ Fire Point ใน Inspector หรือเปล่า!");

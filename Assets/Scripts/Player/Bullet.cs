@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
@@ -7,18 +8,47 @@ public class Bullet : MonoBehaviour
     [Header("ตั้งค่าความแรงกระสุน")]
     [SerializeField] private int bulletDamage = 10;
 
+    [Header("พฤติกรรมกระสุน (Single vs AOE)")]
+    [SerializeField] private WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
+    [SerializeField] private float aoeRadius = 2.5f;
+
     [Header("อายุขัยกระสุน (วินาที)")]
     [SerializeField] private float lifeTime = 4f;
 
-    private void Start()
+    private TrailRenderer trailRenderer;
+    private float lifeTimer;
+    private bool hasHit = false;
+
+    public int Damage => bulletDamage;
+    public WeaponBehaviorType BehaviorType => behaviorType;
+    public float AOERadius => aoeRadius;
+
+    private void Awake()
     {
-        Destroy(gameObject, lifeTime);
+        trailRenderer = GetComponentInChildren<TrailRenderer>();
+    }
+
+    private void OnEnable()
+    {
+        hasHit = false;
+        lifeTimer = lifeTime;
+
+        if (trailRenderer != null)
+        {
+            trailRenderer.Clear();
+        }
     }
 
     private void Update()
     {
         // กระสุนพุ่งออกไปทางซ้าย (หาเป้าหมายซอมบี้)
         transform.Translate(Vector3.left * speed * Time.deltaTime);
+
+        lifeTimer -= Time.deltaTime;
+        if (lifeTimer <= 0f)
+        {
+            DestroyOrReturnBullet();
+        }
     }
 
     public void SetDamage(int dmg)
@@ -26,15 +56,105 @@ public class Bullet : MonoBehaviour
         bulletDamage = dmg;
     }
 
+    public void Configure(int dmg, WeaponBehaviorType behavior, float radius = 0f)
+    {
+        bulletDamage = dmg;
+        behaviorType = behavior;
+        if (radius > 0f) aoeRadius = radius;
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // ล็อกเป้าหาคลาส Hitbox ที่อยู่บน Head_Hitbox หรือ Body_Hitbox เท่านั้น
-        Hitbox targetHitbox = collision.GetComponent<Hitbox>();
+        if (hasHit) return;
 
-        if (targetHitbox != null)
+        Hitbox targetHitbox = collision.GetComponent<Hitbox>();
+        BaseEnemy directEnemy = collision.GetComponent<BaseEnemy>() ?? collision.GetComponentInParent<BaseEnemy>();
+
+        if (targetHitbox != null || collision.CompareTag("Enemy") || directEnemy != null)
         {
-            targetHitbox.TakeHit(bulletDamage);
+            hasHit = true;
+
+            Vector2 hitPoint = transform.position;
+            Vector2 hitDirection = -transform.right; // ทิศทางกระสุนพุ่งตาม Vector3.left ของ Local Space
+
+            if (behaviorType == WeaponBehaviorType.AOE)
+            {
+                ExplodeAOE(hitPoint, hitDirection);
+            }
+            else
+            {
+                // Single target hit (เป้าหมายเดี่ยว) พร้อมส่ง hitPoint และ hitDirection สำหรับ Blood VFX
+                if (targetHitbox != null)
+                {
+                    targetHitbox.TakeHit(bulletDamage, hitPoint, hitDirection);
+                }
+                else if (directEnemy != null)
+                {
+                    directEnemy.TakeDamage(bulletDamage, hitPoint, hitDirection);
+                }
+            }
+
+            DestroyOrReturnBullet();
+        }
+    }
+
+    private void ExplodeAOE(Vector2 explosionCenter, Vector2 hitDirection)
+    {
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(explosionCenter, aoeRadius);
+        HashSet<BaseEnemy> hitEnemies = new HashSet<BaseEnemy>();
+
+        foreach (Collider2D col in colliders)
+        {
+            Hitbox hb = col.GetComponent<Hitbox>();
+            if (hb != null && hb.MainEnemy != null)
+            {
+                if (!hitEnemies.Contains(hb.MainEnemy))
+                {
+                    hb.TakeHit(bulletDamage, col.transform.position, hitDirection);
+                    hitEnemies.Add(hb.MainEnemy);
+                }
+                continue;
+            }
+
+            BaseEnemy enemy = col.GetComponent<BaseEnemy>() ?? col.GetComponentInParent<BaseEnemy>();
+            if (enemy != null && !hitEnemies.Contains(enemy))
+            {
+                enemy.TakeDamage(bulletDamage, col.transform.position, hitDirection);
+                hitEnemies.Add(enemy);
+            }
+        }
+
+        Debug.Log($"💥 [AOE Explosion] ระเบิดรัศมี {aoeRadius}! โดนศัตรู {hitEnemies.Count} ตัว (ดาเมจ: {bulletDamage})");
+    }
+
+    private void DestroyOrReturnBullet()
+    {
+        if (BulletPool.Instance != null)
+        {
+            if (trailRenderer != null)
+            {
+                trailRenderer.Clear();
+            }
+            BulletPool.Instance.ReturnBullet(gameObject);
+        }
+        else
+        {
+            if (trailRenderer != null)
+            {
+                // แยก TrailRenderer ออกให้ค่อยๆ จางหายไปเอง ไม่ขาดวิ่นตอน Destroy
+                trailRenderer.transform.SetParent(null);
+                trailRenderer.autodestruct = true;
+            }
             Destroy(gameObject);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (behaviorType == WeaponBehaviorType.AOE)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, aoeRadius);
         }
     }
 }

@@ -183,6 +183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08ca799ea9f63a44b86ba477bdecf74b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpitterZombie
+  attackType: 0
   maxHealth: 30
   moveSpeed: 3
   attackDamage: 10
@@ -190,7 +191,7 @@ MonoBehaviour:
   rewardCash: 20
   rewardScrap: 10
   rewardScore: 100
-  acidPrefab: {fileID: 0}
+  acidPrefab: {fileID: 773096141354130232, guid: 3674300a2bb0b434a97894da5eab7862, type: 3}
   spitPoint: {fileID: 4345831106155745785}
   stopDistanceToWall: 5.5
   spitCooldown: 2.5
@@ -276,7 +277,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 509459141a3002f46982b0bc661d9e66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hitbox
-  mainEnemy: {fileID: 0}
+  mainEnemy: {fileID: -8869529973190106592}
   damageMultiplier: 2
 --- !u!1 &4546210869403039423
 GameObject:
@@ -369,7 +370,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 509459141a3002f46982b0bc661d9e66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hitbox
-  mainEnemy: {fileID: 0}
+  mainEnemy: {fileID: -8869529973190106592}
   damageMultiplier: 1
 --- !u!1 &5524976003192250728
 GameObject:

@@ -8,6 +8,7 @@ public class WalkerEnemy : BaseEnemy
 
     protected override void Start()
     {
+        attackType = EnemyAttackType.Melee;
         base.Start();
 
         // เซ็ตสเตตัสเฉพาะตัวของ Walker (เดินช้า เลือดปานกลาง)
