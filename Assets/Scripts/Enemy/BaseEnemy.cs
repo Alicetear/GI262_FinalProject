@@ -8,17 +8,11 @@ public enum EnemyAttackType
 
 public class BaseEnemy : MonoBehaviour
 {
-<<<<<<< HEAD
     [Header("ประเภทศัตรู (Data Classification: Melee vs Range)")]
     [SerializeField] protected EnemyAttackType attackType = EnemyAttackType.Melee;
     public EnemyAttackType AttackType => attackType;
 
     [Header("Enemy Stats")]
-
-    [Header("ตั้งค่าพื้นฐานศัตรู")]
-=======
-    [Header("Enemy Stats")]
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] protected int maxHealth = 30;
     protected int currentHealth;
     [SerializeField] protected float moveSpeed = 3f;

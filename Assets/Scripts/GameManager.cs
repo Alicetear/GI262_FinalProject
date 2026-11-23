@@ -48,17 +48,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-<<<<<<< HEAD
     [Header("ระบบเศรษฐกิจ (3 Currencies)")]
-    [SerializeField] private int cash = 200;
-    [SerializeField] private int scrap = 50;
-    [SerializeField] private int rations = 1;
-=======
-    [Header("Currency Balances")]
     [SerializeField] private int cash = 200;      // Used to buy and upgrade weapons.
     [SerializeField] private int scrap = 50;      // Used to repair and reinforce the barricade.
     [SerializeField] private int rations = 1;     // Used to recruit companions.
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 
     [Header("Score and Night")]
     [SerializeField] private int score = 0;
@@ -83,11 +76,7 @@ public class GameManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-<<<<<<< HEAD
             // Enforce the minimum starting balances on scene values.
-=======
-            // Apply the minimum starting balances to the scene values.
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
             if (cash < 200) cash = 200;
             if (scrap < 50) scrap = 50;
             if (rations < 1) rations = 1;

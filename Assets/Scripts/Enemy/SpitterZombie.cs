@@ -2,23 +2,15 @@ using UnityEngine;
 
 public class SpitterZombie : BaseEnemy
 {
-<<<<<<< HEAD
-    [Header("สเตตัสเฉพาะตัว: Spitter (พ่นกรดระยะไกล)")]
-    [SerializeField] private float spitRange = 6f;
-    [SerializeField] private float stopDistanceToWall = 5.5f;
-    [SerializeField] private GameObject acidProjectilePrefab;
-    [SerializeField] private GameObject acidPrefab;
-    [SerializeField] private Transform mouthPoint;
-    [SerializeField] private Transform spitPoint;
-    [SerializeField] private float spitCooldown = 2.5f;
-    [SerializeField] private bool useAnimationEventOnly = false;
-=======
     [Header("Spitter Ranged Attack")]
-    [SerializeField] private GameObject acidPrefab;           // Acid projectile prefab.
-    [SerializeField] private Transform spitPoint;             // Projectile spawn point.
+    [SerializeField] private float spitRange = 6f;
     [SerializeField] private float stopDistanceToWall = 5.5f; // Distance from the barricade at which the spitter stops to attack.
+    [SerializeField] private GameObject acidProjectilePrefab;
+    [SerializeField] private GameObject acidPrefab;           // Legacy acid projectile prefab fallback.
+    [SerializeField] private Transform mouthPoint;
+    [SerializeField] private Transform spitPoint;             // Projectile spawn point fallback.
     [SerializeField] private float spitCooldown = 2.5f;       // Seconds between acid shots.
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+    [SerializeField] private bool useAnimationEventOnly = false;
     [SerializeField] private Sprite spitterSprite;
 
     private float currentSpitTimer = 0.5f;
@@ -127,14 +119,16 @@ public class SpitterZombie : BaseEnemy
     {
         if (isDead) return;
 
-        Vector3 spawnPos = mouthPoint != null ? mouthPoint.position : transform.position + new Vector3(0.5f, 0.5f, 0f);
+        GameObject prefabToSpawn = acidProjectilePrefab != null ? acidProjectilePrefab : acidPrefab;
+        Transform spawnAnchor = mouthPoint != null ? mouthPoint : spitPoint;
+        Vector3 spawnPos = spawnAnchor != null ? spawnAnchor.position : transform.position + new Vector3(0.5f, 0.5f, 0f);
         Vector2 directionToWall = wallTransform != null
             ? ((Vector2)wallTransform.position - (Vector2)spawnPos).normalized
             : Vector2.right;
 
-        if (acidProjectilePrefab != null)
+        if (prefabToSpawn != null)
         {
-            GameObject acidObj = Instantiate(acidProjectilePrefab, spawnPos, Quaternion.identity);
+            GameObject acidObj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
 
             Bullet playerBullet = acidObj.GetComponent<Bullet>();
             if (playerBullet != null) Destroy(playerBullet);
@@ -151,19 +145,7 @@ public class SpitterZombie : BaseEnemy
                 legacySpit.SetDirection(directionToWall);
             }
 
-            AcidSpit spit = acidObj.GetComponent<AcidSpit>();
-            if (spit == null)
-            {
-                spit = acidObj.AddComponent<AcidSpit>();
-            }
-
-<<<<<<< HEAD
-            spit.SetDirection(directionToWall);
-            Debug.Log($"🔥 {gameObject.name} พ่นน้ำกรดไปยัง Barricade!");
-=======
-            spit.SetDirection(Vector2.right);
-            Debug.Log($"{gameObject.name} fired an acid projectile.");
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+            Debug.Log($"🔥 {gameObject.name} fired an acid projectile toward Barricade.");
         }
         else
         {

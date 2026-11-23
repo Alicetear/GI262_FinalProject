@@ -10,12 +10,8 @@ public class FatZombie : BaseEnemy
 
     protected override void Start()
     {
-<<<<<<< HEAD
         attackType = EnemyAttackType.Melee;
         // Apply this enemy's stats before initialization and override BaseEnemy defaults.
-=======
-        // Apply this enemy's stats before initialization.
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         moveSpeed = fatMoveSpeed;
         maxHealth = fatMaxHealth;
         attackDamage = fatAttackDamage;

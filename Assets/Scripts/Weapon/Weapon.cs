@@ -8,15 +8,11 @@ public class Weapon : MonoBehaviour
     [SerializeField] private WeaponStats weaponStats;
     public int currentLevel = 1;
 
-<<<<<<< HEAD
     [Header("พฤติกรรมอาวุธ (Single vs AOE)")]
     [SerializeField] private WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
     [SerializeField] private float aoeRadius = 2.5f;
 
-    [Header("ส่วนประกอบปืน")]
-=======
     [Header("Weapon Components")]
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
 
@@ -53,7 +49,6 @@ public class Weapon : MonoBehaviour
         InitializeStatusDictionary();
     }
 
-<<<<<<< HEAD
     // สร้างข้อมูลโครงสร้าง Dictionary สำหรับทุกระดับเลเวล
     public void InitializeStatusDictionary()
     {
@@ -101,8 +96,6 @@ public class Weapon : MonoBehaviour
         currentAmmo = currentStatus.maxAmmo;
     }
 
-=======
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     private void OnDisable() => isReloading = false;
 
     public bool CanFire()
@@ -131,11 +124,6 @@ public class Weapon : MonoBehaviour
 
         int pellets = weaponStats != null && weaponStats.type == WeaponType.Shotgun ? Mathf.Max(1, weaponStats.pelletCount) : 1;
         for (int i = 0; i < pellets; i++)
-<<<<<<< HEAD
-        {
-            float angle = pellets == 1 ? 0f : weaponStats.spreadAngle * ((float)i / (pellets - 1) - 0.5f);
-            FireProjectile(firePoint.rotation * Quaternion.Euler(0f, 0f, angle));
-=======
         {
             float angle = pellets == 1 ? 0f : weaponStats.spreadAngle * ((float)i / (pellets - 1) - 0.5f);
             FireProjectile(firePoint.rotation * Quaternion.Euler(0f, 0f, angle));
@@ -146,29 +134,6 @@ public class Weapon : MonoBehaviour
         if (currentAmmo <= 0)
         {
             StartCoroutine(ReloadRoutine());
-        }
-    }
-
-    private void FireProjectile(Quaternion rotation)
-    {
-        GameObject bulletObj = null;
-        if (BulletPool.Instance != null)
-        {
-            bulletObj = BulletPool.Instance.SpawnBullet(firePoint.position, rotation);
-        }
-        else if (bulletPrefab != null)
-        {
-            bulletObj = Instantiate(bulletPrefab, firePoint.position, rotation);
-        }
-
-        if (bulletObj != null)
-        {
-            Bullet bullet = bulletObj.GetComponent<Bullet>();
-            if (bullet != null)
-            {
-                bullet.SetDamage(CurrentDamage);
-            }
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         }
     }
 
@@ -224,18 +189,13 @@ public class Weapon : MonoBehaviour
 
     public int GetNextUpgradeCost()
     {
-<<<<<<< HEAD
-        if (weaponStats == null) return 0;
-        if (currentLevel >= weaponStats.maxLevel) return 0;
+        if (weaponStats == null || currentLevel >= weaponStats.maxLevel) return 0;
 
         if (statusByLevelDict.TryGetValue(currentLevel, out WeaponStatus status))
         {
             return status.upgradeCost;
         }
 
-=======
-        if (weaponStats == null || currentLevel >= weaponStats.maxLevel) return 0;
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         return weaponStats.GetUpgradeCost(currentLevel);
     }
 }

@@ -11,20 +11,14 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private float fireRate = 0.25f; 
 
     private float nextFireTime = 0f;
-    private Equipment playerEquipment;
+    private Equipment equipment;
     private Weapon attachedWeapon;
 
-    private void Start()
+    private void Awake()
     {
-        playerEquipment = GetComponent<Equipment>();
+        equipment = GetComponent<Equipment>();
         attachedWeapon = GetComponentInChildren<Weapon>();
     }
-
-    private Equipment equipment;
-    private void Awake() => equipment = GetComponent<Equipment>();
-
-    private Equipment equipment;
-    private void Awake() => equipment = GetComponent<Equipment>();
 
     private void Update()
     {
@@ -48,10 +42,9 @@ public class PlayerShooting : MonoBehaviour
     private void Shoot()
     {
         // ถ้ามี Weapon ที่ติดตั้งอยู่ ให้ยิงผ่าน Weapon เพื่อใช้ระบบ Struct + Dictionary + AOE/Single
-        if (playerEquipment != null && playerEquipment.CurrentWeapon != null)
+        if (equipment != null && equipment.CurrentWeapon != null)
         {
-<<<<<<< HEAD
-            playerEquipment.CurrentWeapon.Fire();
+            equipment.CurrentWeapon.Fire();
             return;
         }
 
@@ -66,13 +59,6 @@ public class PlayerShooting : MonoBehaviour
             Debug.LogWarning("Assign a Fire Point in the Inspector before shooting.");
             return;
         }
-
-=======
-            Debug.LogWarning("Assign a Fire Point in the Inspector before shooting.");
-            return;
-        }
-
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         // Get a bullet from the FIFO pool.
         if (BulletPool.Instance != null)
         {

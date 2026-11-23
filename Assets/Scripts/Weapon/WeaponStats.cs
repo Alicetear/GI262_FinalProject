@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-<<<<<<< HEAD
 public enum WeaponBehaviorType
 {
     Single,
@@ -53,10 +52,6 @@ public struct WeaponStatus
     }
 }
 
-=======
-public enum WeaponType { Pistol, Shotgun, AssaultRifle }
-
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 [CreateAssetMenu(fileName = "NewWeaponStats", menuName = "Outpost7/Weapon Stats")]
 public class WeaponStats : ScriptableObject
 {
@@ -67,13 +62,10 @@ public class WeaponStats : ScriptableObject
     public string weaponName = "Pistol";
     public int maxLevel = 5;
 
-<<<<<<< HEAD
     [Header("พฤติกรรมอาวุธ (Weapon Behavior: Single vs AOE)")]
     public WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
     public float aoeRadius = 2.5f;
 
-=======
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [Header("Damage Scaling")]
     public int baseDamage = 10;
     public float damageGrowthPerLevel = 5f;

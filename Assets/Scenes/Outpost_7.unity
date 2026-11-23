@@ -9197,7 +9197,6 @@ MonoBehaviour:
   fatPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
   spitterPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
   nightWaves:
-<<<<<<< HEAD
   - nightName: Night 1
     spawnInterval: 1.5
     enemySequence:
@@ -9281,7 +9280,6 @@ MonoBehaviour:
       spawnWeight: 20
     totalEnemiesToSpawn: 3
   - nightName: 3
-=======
   - spawnOrder:
     - {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
     - {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
@@ -9330,7 +9328,7 @@ MonoBehaviour:
     - {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
     - {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
     - {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+
     spawnInterval: 1.5
     enemySequence: []
     enemyPool:

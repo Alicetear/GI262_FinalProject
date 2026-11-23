@@ -4,25 +4,15 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed = 15f;
-<<<<<<< Updated upstream
 
     [Header("Bullet Damage")]
-=======
-    [SerializeField] private int damage = 15;
-    [Header("ตั้งค่าความแรงกระสุน")]
-    // 💡 สิ่งที่ขาดไปคือบรรทัดนี้ครับ! ประกาศตัวแปรเก็บค่าดาเมจไว้ด้านบนสุด
->>>>>>> Stashed changes
     [SerializeField] private int bulletDamage = 10;
 
-<<<<<<< HEAD
     [Header("พฤติกรรมกระสุน (Single vs AOE)")]
     [SerializeField] private WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
     [SerializeField] private float aoeRadius = 2.5f;
 
-    [Header("อายุขัยกระสุน (วินาที)")]
-=======
     [Header("Bullet Lifetime (Seconds)")]
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private float lifeTime = 4f;
 
     private TrailRenderer trailRenderer;
@@ -75,15 +65,9 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-<<<<<<< HEAD
         if (hasHit) return;
-=======
-        // Only head and body hitboxes receive bullet damage.
-        Hitbox targetHitbox = collision.GetComponent<Hitbox>();
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 
-        // Only head and body hitboxes receive bullet damage.
-
+        // Only head and body hitboxes (or enemy colliders) receive bullet damage.
         Hitbox targetHitbox = collision.GetComponent<Hitbox>();
         BaseEnemy directEnemy = collision.GetComponent<BaseEnemy>() ?? collision.GetComponentInParent<BaseEnemy>();
 

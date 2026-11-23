@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
-<<<<<<< HEAD
 
 [System.Serializable]
 public struct EnemyCatalogEntry
@@ -20,17 +20,11 @@ public class EnemySpawnPool
     [Range(0f, 100f)]
     public float spawnWeight = 50f;
 }
-=======
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
-using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class MixedNightWaveData
 {
-<<<<<<< HEAD
     public string nightName = "Night 1";
-=======
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     public GameObject[] spawnOrder;
     public float spawnInterval = 1.5f;
 
@@ -47,7 +41,6 @@ public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance;
 
-<<<<<<< HEAD
     [Header("คลังอ้างอิงศัตรูทั้งหมด (Master Enemy Reference Catalog)")]
     [Tooltip("รายการศัตรูทั้งหมดเป็น reference ให้กับเวฟ data ตามโจทย์อาจารย์")]
     [SerializeField] private List<EnemyCatalogEntry> enemyCatalog = new List<EnemyCatalogEntry>();
@@ -59,10 +52,7 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private GameObject fatPrefab;
     [SerializeField] private GameObject spitterPrefab;
 
-    [Header("ตั้งค่าเวฟ (Night Waves)")]
-=======
     [Header("Night Waves")]
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private List<MixedNightWaveData> nightWaves;
     public int currentWaveIndex = 0;
     [SerializeField] private GameObject runSetupPanel;
@@ -284,9 +274,8 @@ public class WaveManager : MonoBehaviour
             yield break;
         }
 
-<<<<<<< HEAD
-        MixedNightWaveData currentWave = nightWaves[waveIndex];
-        Debug.Log($"--- เริ่มต้น {currentWave.nightName} (Wave {waveIndex + 1}/{nightWaves.Count}) ---");
+        MixedNightWaveData currentWave = nightWaves[Mathf.Min(waveIndex, nightWaves.Count - 1)];
+        Debug.Log($"--- เริ่มต้น {currentWave.nightName} (Wave {waveIndex + 1}/{totalNights}) ---");
 
         spawnQueue.Clear();
 
@@ -304,6 +293,13 @@ public class WaveManager : MonoBehaviour
                 }
             }
         }
+        else if (currentWave.spawnOrder != null && currentWave.spawnOrder.Length > 0)
+        {
+            foreach (GameObject prefab in currentWave.spawnOrder)
+            {
+                if (prefab != null) spawnQueue.Enqueue(prefab);
+            }
+        }
         else if (currentWave.enemyPool != null && currentWave.enemyPool.Count > 0)
         {
             for (int i = 0; i < currentWave.totalEnemiesToSpawn; i++)
@@ -315,19 +311,6 @@ public class WaveManager : MonoBehaviour
                 }
             }
         }
-        else if (currentWave.spawnOrder != null)
-        {
-            foreach (GameObject prefab in currentWave.spawnOrder)
-            {
-                if (prefab != null) spawnQueue.Enqueue(prefab);
-            }
-        }
-=======
-        var currentWave = nightWaves[Mathf.Min(waveIndex, nightWaves.Count - 1)];
-        spawnQueue.Clear();
-        foreach (var prefab in currentWave.spawnOrder)
-            spawnQueue.Enqueue(prefab);
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 
         Debug.Log($"[WaveManager] บรรจุศัตรูเข้าคิว Queue: {spawnQueue.Count} ตัว (ปิดการสุ่ม)");
         isSpawningWave = true;
@@ -458,7 +441,7 @@ public class WaveManager : MonoBehaviour
 
         StartCoroutine(StartWave(currentWaveIndex));
     }
-<<<<<<< HEAD
+
     private bool isQuitting = false;
 
     private void OnApplicationQuit()
@@ -470,8 +453,4 @@ public class WaveManager : MonoBehaviour
     {
         if (isQuitting || !gameObject.scene.isLoaded) return;
     }
-=======
-
-
->>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 }
