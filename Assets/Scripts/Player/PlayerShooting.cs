@@ -11,33 +11,21 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private float fireRate = 0.25f; 
 
     private float nextFireTime = 0f;
-    private Equipment playerEquipment;
-    private Weapon attachedWeapon;
 
-    private void Awake()
-    {
-        playerEquipment = GetComponent<Equipment>();
-    }
-
-    private void Start()
-    {
-        if (playerEquipment == null) playerEquipment = GetComponent<Equipment>();
-        attachedWeapon = GetComponentInChildren<Weapon>();
-    }
+    private Equipment equipment;
+    private void Awake() => equipment = GetComponent<Equipment>();
 
     private void Update()
     {
-        if (Time.timeScale == 0f) return;
-
-        if (playerEquipment != null && playerEquipment.CurrentWeapon != null)
+        if (Time.timeScale == 0f || (WaveManager.Instance != null && WaveManager.Instance.PauseBlocksInput)) return;
+        if (equipment != null && equipment.CurrentWeapon != null)
         {
-            Weapon weapon = playerEquipment.CurrentWeapon;
+            Weapon weapon = equipment.CurrentWeapon;
             bool automatic = weapon.Stats != null && weapon.Stats.type == WeaponType.AssaultRifle;
             if (automatic ? Input.GetMouseButton(0) : Input.GetMouseButtonDown(0)) weapon.Fire();
-            if (Input.GetKeyDown(KeyCode.R)) weapon.Reload();
+            if (Input.GetKeyDown(KeyCode.R)) equipment.CurrentWeapon.Reload();
             return;
         }
-
         // Fire once per click, subject to the fire interval.
         if (Input.GetMouseButtonDown(0) && Time.time >= nextFireTime)
         {
@@ -48,18 +36,6 @@ public class PlayerShooting : MonoBehaviour
 
     private void Shoot()
     {
-        if (playerEquipment != null && playerEquipment.CurrentWeapon != null)
-        {
-            playerEquipment.CurrentWeapon.Fire();
-            return;
-        }
-
-        if (attachedWeapon != null)
-        {
-            attachedWeapon.Fire();
-            return;
-        }
-
         if (firePoint == null)
         {
             Debug.LogWarning("Assign a Fire Point in the Inspector before shooting.");

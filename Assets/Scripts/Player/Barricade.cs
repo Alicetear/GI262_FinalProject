@@ -4,16 +4,16 @@ public class Barricade : MonoBehaviour
 {
     public static Barricade Instance { get; private set; }
 
-    [Header("สเตตัสกำแพง")]
+    [Header("Barricade Stats")]
     public int maxHealth = 1000;
     private int currentHealth;
 
-    [Header("ระบบสีกำแพง (ซ้าย=พัง/สีแดง, ขวา=เต็ม/สีเขียว)")]
+    [Header("Health Gradient (Destroyed to Full Health)")]
     [SerializeField] private Gradient healthGradient;
     private SpriteRenderer spriteRenderer;
 
-    [Header("ระบบจบเกม")]
-    [SerializeField] private GameObject gameOverPanel; // ลาก UI Game Over มาใส่
+    [Header("Game Over")]
+    [SerializeField] private GameObject gameOverPanel; // Assign the game-over panel.
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
@@ -31,13 +31,20 @@ public class Barricade : MonoBehaviour
         UpdateWallColor();
     }
 
+    public void RestoreHealth(int hp, int maximum)
+    {
+        maxHealth = maximum;
+        currentHealth = hp;
+        UpdateWallColor();
+    }
+
     public void TakeDamage(int damageAmount)
     {
         if (currentHealth <= 0) return;
 
         currentHealth -= damageAmount;
         if (currentHealth < 0) currentHealth = 0;
-        Debug.Log($"กำแพงโดนตี! เลือดเหลือ: {currentHealth}/{maxHealth}");
+        Debug.Log($"Barricade hit. HP: {currentHealth}/{maxHealth}.");
 
         UpdateWallColor();
 
@@ -51,7 +58,7 @@ public class Barricade : MonoBehaviour
     {
         if (currentHealth >= maxHealth) return;
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
-        Debug.Log($"ซ่อมแซมกำแพงแล้ว! เลือดปัจจุบัน: {currentHealth}/{maxHealth}");
+        Debug.Log($"Barricade repaired. HP: {currentHealth}/{maxHealth}.");
         UpdateWallColor();
     }
 
@@ -59,7 +66,7 @@ public class Barricade : MonoBehaviour
     {
         maxHealth += amount;
         currentHealth += amount;
-        Debug.Log($"อัปเกรดความจุเลือดกำแพง! เลือดสูงสุดใหม่: {maxHealth}");
+        Debug.Log($"Barricade upgraded. New maximum HP: {maxHealth}.");
         UpdateWallColor();
     }
 
@@ -72,7 +79,7 @@ public class Barricade : MonoBehaviour
 
     private void TriggerGameOver()
     {
-        Debug.Log("แนวป้องกันแตก! GAME OVER!");
+        Debug.Log("Barricade destroyed. Game over.");
 
         if (gameOverPanel != null)
         {

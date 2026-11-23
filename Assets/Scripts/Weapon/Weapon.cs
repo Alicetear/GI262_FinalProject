@@ -26,7 +26,7 @@ public class Weapon : MonoBehaviour
     // ตัวแปรสเตตัสปัจจุบันในรูปแบบ struct
     private WeaponStatus currentStatus;
 
-    private int currentAmmo;
+    private int currentAmmo = -1;
     private bool isReloading = false;
     private float nextFireTime = 0f;
 
@@ -36,7 +36,7 @@ public class Weapon : MonoBehaviour
     public Dictionary<string, object> CurrentStatusDict => currentStatusDict;
 
     public string WeaponName => currentStatus.weaponName;
-    public int CurrentAmmo => currentAmmo;
+    public int CurrentAmmo => currentAmmo < 0 ? MaxAmmo : currentAmmo;
     public int MaxAmmo => currentStatus.maxAmmo > 0 ? currentStatus.maxAmmo : (weaponStats != null ? weaponStats.GetMaxAmmo(currentLevel) : 12);
     public int CurrentDamage => currentStatus.damage > 0 ? currentStatus.damage : (weaponStats != null ? weaponStats.GetDamage(currentLevel) : 10);
     public float CurrentReloadTime => currentStatus.reloadTime > 0 ? currentStatus.reloadTime : (weaponStats != null ? weaponStats.GetReloadTime(currentLevel) : 1.5f);
@@ -46,7 +46,7 @@ public class Weapon : MonoBehaviour
 
     private void Awake()
     {
-        InitializeStatusDictionary();
+        if (statusByLevelDict.Count == 0) InitializeStatusDictionary();
     }
 
     public void InitializeStatusDictionary()
@@ -92,6 +92,13 @@ public class Weapon : MonoBehaviour
 
         currentStatusDict = currentStatus.ToDictionary();
         currentAmmo = currentStatus.maxAmmo;
+    }
+
+    public void RestoreStats(int level, int ammo)
+    {
+        currentLevel = Mathf.Clamp(level, 1, weaponStats.maxLevel);
+        InitializeStatusDictionary();
+        currentAmmo = Mathf.Clamp(ammo, 0, MaxAmmo);
     }
 
     private void OnDisable() => isReloading = false;

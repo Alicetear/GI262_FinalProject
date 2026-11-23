@@ -3,25 +3,25 @@ using TMPro;
 
 public class InGameHUD : MonoBehaviour
 {
-    [Header("UI ทรัพยากร (Currencies)")]
+    [Header("Currency Display")]
     [SerializeField] private TextMeshProUGUI cashText;
     [SerializeField] private TextMeshProUGUI scrapText;
     [SerializeField] private TextMeshProUGUI rationsText;
     [SerializeField] private TextMeshProUGUI scoreText;
 
-    [Header("UI คลื่นและเวลา (Wave & Night)")]
+    [Header("Wave and Night Display")]
     [SerializeField] private TextMeshProUGUI nightText;
     [SerializeField] private TextMeshProUGUI enemiesRemainingText;
 
-    [Header("UI กำแพง (Barricade)")]
+    [Header("Barricade Display")]
     [SerializeField] private TextMeshProUGUI wallHealthText;
 
-    [Header("UI อาวุธ (Weapon & Ammo)")]
+    [Header("Weapon and Ammo Display")]
     [SerializeField] private TextMeshProUGUI weaponNameText;
     [SerializeField] private TextMeshProUGUI ammoText;
     [SerializeField] private GameObject reloadIndicator;
 
-    [Header("อ้างอิงผู้เล่น")]
+    [Header("Player References")]
     [SerializeField] private PlayerShooting playerShooting;
     [SerializeField] private Equipment playerEquipment;
 
@@ -72,7 +72,10 @@ public class InGameHUD : MonoBehaviour
         {
             if (nightText != null)
             {
-                nightText.text = $"Night {WaveManager.Instance.currentWaveIndex + 1}";
+                var waves = WaveManager.Instance;
+                bool defending = waves.RunStarted && GameManager.Instance.currentState == GameState.NightDefense;
+                nightText.enabled = defending;
+                if (defending) nightText.SetText("NIGHT {0}/{1}", waves.currentWaveIndex + 1, RunCheckpoint.CampaignNights);
             }
 
             if (enemiesRemainingText != null)

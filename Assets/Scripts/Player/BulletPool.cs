@@ -5,7 +5,7 @@ public class BulletPool : MonoBehaviour
 {
     public static BulletPool Instance { get; private set; }
 
-    [Header("ตั้งค่า Object Pool กระสุน")]
+    [Header("Bullet Pool")]
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private int initialPoolSize = 25;
 

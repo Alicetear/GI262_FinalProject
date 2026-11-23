@@ -11,6 +11,30 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] public string gameSceneName = "GameScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    [SerializeField] private GameObject continueButton;
+    [SerializeField] private RectTransform[] menuActions;
+
+    private void Awake()
+    {
+        if (continueButton == null) return;
+        bool hasSave = RunCheckpoint.TryLoad(out _);
+        continueButton.SetActive(hasSave);
+
+        if (hasSave || menuActions == null || menuActions.Length == 0) return;
+        var continueRect = (RectTransform)continueButton.transform;
+        float gap = continueRect.anchoredPosition.y - menuActions[0].anchoredPosition.y;
+        foreach (var action in menuActions)
+            action.anchoredPosition += Vector2.up * gap;
+    }
+
+    public void ContinueGame()
+    {
+        if (!RunCheckpoint.TryLoad(out _)) return;
+        RunCheckpoint.ResumeRequested = true;
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(gameSceneName);
+    }
+
     private void Start()
     {
         if (optionsPanel != null)
@@ -21,6 +45,7 @@ public class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
+        RunCheckpoint.ResumeRequested = false;
         SceneManager.LoadScene(gameSceneName);
     }
 
@@ -50,7 +75,7 @@ public class MainMenuController : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f; // คืนค่าเวลาเกมให้เป็นปกติ
+        Time.timeScale = 1f; // Restore normal game speed.
         SceneManager.LoadScene(mainMenuSceneName);
     }
 

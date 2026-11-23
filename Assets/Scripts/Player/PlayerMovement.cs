@@ -5,11 +5,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement Stats")]
     [SerializeField] private float moveSpeed = 5f;
 
-    [Header("Boundary Limits (หลังบังเกอร์)")]
-    [SerializeField] private float minX = 6f;  // ขอบเขตซ้ายสุดหลังกำแพง
-    [SerializeField] private float maxX = 9f;  // ขอบเขตขวาสุดหลังกำแพง
-    [SerializeField] private float minY = -4f; // ขอบเขตด้านล่าง
-    [SerializeField] private float maxY = 4f;  // ขอบเขตด้านบน
+    [Header("Movement Bounds Behind the Barricade")]
+    [SerializeField] private float minX = 6f;  // Left boundary.
+    [SerializeField] private float maxX = 9f;  // Right boundary.
+    [SerializeField] private float minY = -4f; // Lower boundary.
+    [SerializeField] private float maxY = 4f;  // Upper boundary.
 
     private Rigidbody2D rb;
     private Vector2 movement;
@@ -21,21 +21,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        // รับค่าปุ่มกด W, A, S, D
+        // Read horizontal and vertical movement input.
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.y = Input.GetAxisRaw("Vertical");
     }
 
     private void FixedUpdate()
     {
-        // คำนวณตำแหน่งใหม่
+        // Calculate the next position.
         Vector2 newPos = rb.position + movement.normalized * moveSpeed * Time.fixedDeltaTime;
 
-        // บังคับให้อยู่ในขอบเขตหลังบังเกอร์เท่านั้น (Clamp)
+        // Keep the player inside the area behind the barricade.
         newPos.x = Mathf.Clamp(newPos.x, minX, maxX);
         newPos.y = Mathf.Clamp(newPos.y, minY, maxY);
 
-        // ขยับตัวละคร
+        // Move the rigidbody.
         rb.MovePosition(newPos);
     }
 }

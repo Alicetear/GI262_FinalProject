@@ -18,16 +18,12 @@ public enum GameState
 
 public class GameManager : MonoBehaviour
 {
-    private static bool isQuitting = false;
     private static GameManager instance;
 
     public static GameManager Instance
     {
         get
         {
-            // ป้องกันการสร้าง GameManager (Auto) ขึ้นมาใหม่ตอนที่แอปพลิเคชันกำลังปิดตัว
-            if (isQuitting) return null;
-
             if (instance == null)
             {
                 instance = FindAnyObjectByType<GameManager>();
@@ -42,16 +38,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    [Header("ระบบเศรษฐกิจ (3 Currencies)")]
-    [SerializeField] private int cash = 0;        // ใช้ซื้อปืน/อัปเกรดปืน (เริ่มต้น $0)
-    [SerializeField] private int scrap = 0;       // ใช้ซ่อมแซม/อัปเกรดกำแพง
-    [SerializeField] private int rations = 0;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
+    [Header("Currency Balances")]
+    [SerializeField] private int cash = 200;      // Used to buy and upgrade weapons.
+    [SerializeField] private int scrap = 50;      // Used to repair and reinforce the barricade.
+    [SerializeField] private int rations = 1;     // Used to recruit companions.
 
-    [Header("คะแนนและคืนปัจจุบัน")]
+    [Header("Score and Night")]
     [SerializeField] private int score = 0;
     [SerializeField] private int currentNight = 1;
 
-    [Header("สถานะเกม")]
+    [Header("Game State")]
     public GameState currentState = GameState.NightDefense;
 
     public event Action OnCurrencyChanged;
@@ -63,37 +59,31 @@ public class GameManager : MonoBehaviour
     public int Score => score;
     public int CurrentNight => currentNight;
 
+    private int startingCash, startingScrap, startingRations;
+    public void ResetForNewRun() => RestoreBalances(startingCash, startingScrap, startingRations, 0);
+    public void RestoreBalances(int newCash, int newScrap, int newRations, int newScore)
+    {
+        cash = newCash; scrap = newScrap; rations = newRations; score = newScore;
+        OnCurrencyChanged?.Invoke();
+        OnScoreChanged?.Invoke(score);
+    }
+
     private void Awake()
     {
-        isQuitting = false;
-
-        if (instance == null)
+        if (instance == null || instance == this)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // คืนที่ 1 เริ่มต้นเงิน (Cash) ที่ $0 เสมอ
-            if (currentNight <= 1)
-            {
-                cash = 0;
-            }
+            // Apply the minimum starting balances to the scene values.
+            if (cash < 200) cash = 200;
+            if (scrap < 50) scrap = 50;
+            if (rations < 1) rations = 1;
+            startingCash = cash; startingScrap = scrap; startingRations = rations;
         }
         else if (instance != this)
         {
             Destroy(gameObject);
-        }
-    }
-
-    private void OnApplicationQuit()
-    {
-        isQuitting = true;
-    }
-
-    private void OnDestroy()
-    {
-        if (instance == this)
-        {
-            instance = null;
         }
     }
 
@@ -114,7 +104,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Debug.Log($"ได้รับ {type}: +{amount} (Cash={cash}, Scrap={scrap}, Rations={rations})");
+        Debug.Log($"Gained {amount} {type}. Cash: {cash}, Scrap: {scrap}, Rations: {rations}.");
         OnCurrencyChanged?.Invoke();
     }
 
@@ -152,7 +142,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Debug.LogWarning($"ทรัพยากรไม่พอ! ต้องการ {type}: {amount}");
+        Debug.LogWarning($"Insufficient {type}. Required: {amount}.");
         return false;
     }
 
@@ -175,12 +165,14 @@ public class GameManager : MonoBehaviour
     public void TriggerGameOver()
     {
         currentState = GameState.GameOver;
+        RunCheckpoint.Clear();
         Debug.Log("GameManager: Game Over!");
     }
 
     public void TriggerVictory()
     {
         currentState = GameState.Victory;
+        RunCheckpoint.Clear();
         Debug.Log("GameManager: Victory!");
     }
 }
