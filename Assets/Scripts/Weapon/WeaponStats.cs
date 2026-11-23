@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+<<<<<<< HEAD
 public enum WeaponBehaviorType
 {
-    Single, // โจมตีเป้าหมายเดี่ยว (Direct Hit)
-    AOE     // ระเบิดดาเมจเป็นวงกว้าง (Area of Effect / Splash Damage)
+    Single,
+    AOE
 }
+
+public enum WeaponType { Pistol, Shotgun, AssaultRifle }
 
 [System.Serializable]
 public struct WeaponStatus
@@ -33,7 +36,6 @@ public struct WeaponStatus
         this.aoeRadius = aoeRadius;
     }
 
-    // แปลงโครงสร้าง Struct เป็น Dictionary ตามโจทย์อาจารย์: "ปรับ weapon status เป็นโครงสร้างแบบ dictionary"
     public Dictionary<string, object> ToDictionary()
     {
         return new Dictionary<string, object>
@@ -51,34 +53,44 @@ public struct WeaponStatus
     }
 }
 
+=======
+public enum WeaponType { Pistol, Shotgun, AssaultRifle }
+
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 [CreateAssetMenu(fileName = "NewWeaponStats", menuName = "Outpost7/Weapon Stats")]
 public class WeaponStats : ScriptableObject
 {
-    [Header("ข้อมูลอาวุธ")]
+    [Header("Weapon Details")]
+    public WeaponType type;
+    [Min(1)] public int pelletCount = 5;
+    [Range(0, 90)] public float spreadAngle = 24f;
     public string weaponName = "Pistol";
     public int maxLevel = 5;
 
+<<<<<<< HEAD
     [Header("พฤติกรรมอาวุธ (Weapon Behavior: Single vs AOE)")]
     public WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
     public float aoeRadius = 2.5f;
 
-    [Header("พลังโจมตี (Damage Scaling)")]
+=======
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+    [Header("Damage Scaling")]
     public int baseDamage = 10;
     public float damageGrowthPerLevel = 5f;
 
-    [Header("อัตราการยิง (Fire Rate - วินาทีต่อนัด)")]
+    [Header("Fire Interval (Seconds per Shot)")]
     public float baseFireInterval = 0.35f;
     public float fireRateImprovementPerLevel = 0.03f;
 
-    [Header("ความจุกระสุน (Magazine Size)")]
+    [Header("Magazine Capacity")]
     public int baseMaxAmmo = 12;
     public int ammoGrowthPerLevel = 3;
 
-    [Header("เวลารีโหลด (Reload Time - วินาที)")]
+    [Header("Reload Time (Seconds)")]
     public float baseReloadTime = 1.8f;
     public float reloadReductionPerLevel = 0.15f;
 
-    [Header("ค่าใช้จ่ายในการอัปเกรด (Cash Cost)")]
+    [Header("Upgrade Cost (Cash)")]
     public int baseUpgradeCost = 100;
     public float costMultiplier = 1.5f;
 

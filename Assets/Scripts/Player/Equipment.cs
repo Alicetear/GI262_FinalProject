@@ -1,83 +1,71 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class Equipment : MonoBehaviour
 {
-    [Header("ช่องติดตั้งอาวุธ (Equipment Slots)")]
-    [SerializeField] private Weapon primaryWeapon;
-    [SerializeField] private Weapon secondaryWeapon;
+    [Header("Weapon instances for this character")]
+    [FormerlySerializedAs("primaryWeapon"), SerializeField] private Weapon firstWeapon;
+    [FormerlySerializedAs("secondaryWeapon"), SerializeField] private Weapon secondWeapon;
+    [SerializeField] private Weapon reserveWeapon;
+    [SerializeField] private bool aiControlled;
 
-    private Weapon currentWeapon;
-    private PlayerShooting playerShooting;
+    public Weapon PrimaryWeapon { get; private set; }
+    public Weapon SecondaryWeapon { get; private set; }
+    public Weapon CurrentWeapon { get; private set; }
+    public event System.Action Changed;
 
-    public Weapon CurrentWeapon => currentWeapon;
-    public Weapon PrimaryWeapon => primaryWeapon;
-    public Weapon SecondaryWeapon => secondaryWeapon;
-
-    private void Start()
+    private void Awake()
     {
-        playerShooting = GetComponent<PlayerShooting>();
-
-        if (primaryWeapon != null)
+        foreach (var weapon in new[] { firstWeapon, secondWeapon, reserveWeapon })
         {
-            EquipWeapon(primaryWeapon);
-            if (secondaryWeapon != null)
-            {
-                secondaryWeapon.gameObject.SetActive(false);
-            }
+            if (weapon == null) continue;
+            weapon.gameObject.SetActive(false);
+            if (weapon.Stats != null && weapon.Stats.type == WeaponType.Pistol)
+                PrimaryWeapon = weapon;
         }
-        else if (secondaryWeapon != null)
-        {
-            EquipWeapon(secondaryWeapon);
-        }
+        EquipWeapon(PrimaryWeapon);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            if (primaryWeapon != null && currentWeapon != primaryWeapon)
-            {
-                EquipWeapon(primaryWeapon);
-            }
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            if (secondaryWeapon != null && currentWeapon != secondaryWeapon)
-            {
-                EquipWeapon(secondaryWeapon);
-            }
-        }
-        else if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SwitchWeapon();
-        }
+        if (aiControlled) return;
+        if (Input.GetKeyDown(KeyCode.Alpha1)) EquipWeapon(PrimaryWeapon);
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) EquipWeapon(SecondaryWeapon);
+        else if (Input.GetKeyDown(KeyCode.Q)) SwitchWeapon();
     }
 
-    public void SwitchWeapon()
+    // The armory assigns a weapon to this character. Combat input only selects occupied slots.
+    public void SelectWeapon(WeaponType type)
     {
-        if (currentWeapon == primaryWeapon && secondaryWeapon != null)
+        if (type != WeaponType.Pistol && (ShopManager.Instance == null || !ShopManager.Instance.IsUnlocked(type))) return;
+        Weapon wanted = FindWeapon(type);
+        if (wanted == null) return;
+        if (wanted != PrimaryWeapon && wanted != SecondaryWeapon)
         {
-            EquipWeapon(secondaryWeapon);
+            if (PrimaryWeapon == null) PrimaryWeapon = wanted;
+            else if (SecondaryWeapon == null) SecondaryWeapon = wanted;
+            else if (CurrentWeapon == PrimaryWeapon) PrimaryWeapon = wanted;
+            else SecondaryWeapon = wanted;
         }
-        else if (primaryWeapon != null)
-        {
-            EquipWeapon(primaryWeapon);
-        }
+        EquipWeapon(wanted);
     }
 
-    public void EquipWeapon(Weapon newWeapon)
+    private Weapon FindWeapon(WeaponType type)
     {
-        if (newWeapon == null) return;
+        if (firstWeapon != null && firstWeapon.Stats != null && firstWeapon.Stats.type == type) return firstWeapon;
+        if (secondWeapon != null && secondWeapon.Stats != null && secondWeapon.Stats.type == type) return secondWeapon;
+        if (reserveWeapon != null && reserveWeapon.Stats != null && reserveWeapon.Stats.type == type) return reserveWeapon;
+        return null;
+    }
 
-        if (currentWeapon != null && currentWeapon != newWeapon)
-        {
-            currentWeapon.gameObject.SetActive(false);
-        }
+    public void SwitchWeapon() => EquipWeapon(CurrentWeapon == PrimaryWeapon ? SecondaryWeapon : PrimaryWeapon);
 
-        currentWeapon = newWeapon;
-        currentWeapon.gameObject.SetActive(true);
-
-        Debug.Log($"สลับมาถืออาวุธ: {currentWeapon.Stats?.weaponName ?? currentWeapon.name}");
+    public void EquipWeapon(Weapon weapon)
+    {
+        if (weapon == null || weapon == CurrentWeapon || (weapon != PrimaryWeapon && weapon != SecondaryWeapon)) return;
+        if (CurrentWeapon != null) CurrentWeapon.gameObject.SetActive(false);
+        CurrentWeapon = weapon;
+        weapon.gameObject.SetActive(true);
+        Changed?.Invoke();
     }
 }
-

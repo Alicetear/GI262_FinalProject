@@ -3,26 +3,22 @@ using UnityEngine;
 
 public class CompanionAI : MonoBehaviour
 {
-    [Header("การตั้งค่าอาวุธและตำแหน่ง")]
+    [Header("Weapon and Position")]
     [SerializeField] private Weapon assignedWeapon;
     [SerializeField] private Transform gunPivot;
     [SerializeField] private float detectionRange = 12f;
 
-    [Header("เป้าหมายปัจจุบัน")]
+    [Header("Current Target")]
     [SerializeField] private BaseEnemy currentTarget;
 
-    public Weapon AssignedWeapon => assignedWeapon;
+    private Equipment equipment;
+    public Weapon AssignedWeapon => equipment != null ? equipment.CurrentWeapon : assignedWeapon;
 
-    private void Start()
-    {
-        if (assignedWeapon == null)
-        {
-            assignedWeapon = GetComponentInChildren<Weapon>();
-        }
-    }
+    private void Awake() => equipment = GetComponent<Equipment>();
 
     private void Update()
     {
+        if (Time.timeScale == 0f) return;
         FindNearestTarget();
 
         if (currentTarget != null)
@@ -78,9 +74,9 @@ public class CompanionAI : MonoBehaviour
 
     private void AutoShoot()
     {
-        if (assignedWeapon != null)
+        if (AssignedWeapon != null)
         {
-            assignedWeapon.Fire();
+            AssignedWeapon.Fire();
         }
     }
 }

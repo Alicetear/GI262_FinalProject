@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class WalkerEnemy : BaseEnemy
 {
-    [Header("ตั้งค่าสไปรต์เฉพาะตัวของ Walker")]
-    [SerializeField] private Sprite walkerSprite; // ช่องลากรูปสไปรต์ Walker มาใส่
+    [Header("Walker Sprite")]
+    [SerializeField] private Sprite walkerSprite; // Assign the walker sprite here.
     private SpriteRenderer spriteRenderer;
 
     protected override void Start()
@@ -11,12 +11,12 @@ public class WalkerEnemy : BaseEnemy
         attackType = EnemyAttackType.Melee;
         base.Start();
 
-        // เซ็ตสเตตัสเฉพาะตัวของ Walker (เดินช้า เลือดปานกลาง)
+        // Walkers move slowly and have moderate health.
         moveSpeed = 2.5f;
         maxHealth = 30;
         currentHealth = maxHealth;
 
-        // ดึงคอมโพเนนต์ SpriteRenderer ออกมาสลับรูปภาพ
+        // Get the renderer used to apply the walker sprite.
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (walkerSprite != null && spriteRenderer != null)
         {

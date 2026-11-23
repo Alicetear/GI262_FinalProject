@@ -48,16 +48,23 @@ public class GameManager : MonoBehaviour
         }
     }
 
+<<<<<<< HEAD
     [Header("ระบบเศรษฐกิจ (3 Currencies)")]
-    [SerializeField] private int cash = 0;        // ใช้ซื้อปืน/อัปเกรดปืน (เริ่มต้น $0)
-    [SerializeField] private int scrap = 0;       // ใช้ซ่อมแซม/อัปเกรดกำแพง
-    [SerializeField] private int rations = 0;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
+    [SerializeField] private int cash = 200;
+    [SerializeField] private int scrap = 50;
+    [SerializeField] private int rations = 1;
+=======
+    [Header("Currency Balances")]
+    [SerializeField] private int cash = 200;      // Used to buy and upgrade weapons.
+    [SerializeField] private int scrap = 50;      // Used to repair and reinforce the barricade.
+    [SerializeField] private int rations = 1;     // Used to recruit companions.
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 
-    [Header("คะแนนและคืนปัจจุบัน")]
+    [Header("Score and Night")]
     [SerializeField] private int score = 0;
     [SerializeField] private int currentNight = 1;
 
-    [Header("สถานะเกม")]
+    [Header("Game State")]
     public GameState currentState = GameState.NightDefense;
 
     public event Action OnCurrencyChanged;
@@ -75,6 +82,15 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+
+<<<<<<< HEAD
+            // Enforce the minimum starting balances on scene values.
+=======
+            // Apply the minimum starting balances to the scene values.
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+            if (cash < 200) cash = 200;
+            if (scrap < 50) scrap = 50;
+            if (rations < 1) rations = 1;
         }
         else if (instance != this)
         {
@@ -104,7 +120,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Debug.Log($"ได้รับ {type}: +{amount} (Cash={cash}, Scrap={scrap}, Rations={rations})");
+        Debug.Log($"Gained {amount} {type}. Cash: {cash}, Scrap: {scrap}, Rations: {rations}.");
         OnCurrencyChanged?.Invoke();
     }
 
@@ -142,7 +158,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        Debug.LogWarning($"ทรัพยากรไม่พอ! ต้องการ {type}: {amount}");
+        Debug.LogWarning($"Insufficient {type}. Required: {amount}.");
         return false;
     }
 

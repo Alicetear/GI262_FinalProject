@@ -5,14 +5,18 @@ public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed = 15f;
 
-    [Header("ตั้งค่าความแรงกระสุน")]
+    [Header("Bullet Damage")]
     [SerializeField] private int bulletDamage = 10;
 
+<<<<<<< HEAD
     [Header("พฤติกรรมกระสุน (Single vs AOE)")]
     [SerializeField] private WeaponBehaviorType behaviorType = WeaponBehaviorType.Single;
     [SerializeField] private float aoeRadius = 2.5f;
 
     [Header("อายุขัยกระสุน (วินาที)")]
+=======
+    [Header("Bullet Lifetime (Seconds)")]
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private float lifeTime = 4f;
 
     private TrailRenderer trailRenderer;
@@ -41,7 +45,7 @@ public class Bullet : MonoBehaviour
 
     private void Update()
     {
-        // กระสุนพุ่งออกไปทางซ้าย (หาเป้าหมายซอมบี้)
+        // Bullets travel along the local left axis toward enemies.
         transform.Translate(Vector3.left * speed * Time.deltaTime);
 
         lifeTimer -= Time.deltaTime;
@@ -65,7 +69,14 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+<<<<<<< HEAD
         if (hasHit) return;
+=======
+        // Only head and body hitboxes receive bullet damage.
+        Hitbox targetHitbox = collision.GetComponent<Hitbox>();
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+
+        // Only head and body hitboxes receive bullet damage.
 
         Hitbox targetHitbox = collision.GetComponent<Hitbox>();
         BaseEnemy directEnemy = collision.GetComponent<BaseEnemy>() ?? collision.GetComponentInParent<BaseEnemy>();

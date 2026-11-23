@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+<<<<<<< HEAD
 
 [System.Serializable]
 public struct EnemyCatalogEntry
 {
-    public string enemyId; // e.g. "Walker", "Runner", "Fat", "Spitter"
+    public string enemyId;
     public GameObject enemyPrefab;
-    public EnemyAttackType attackType; // Melee vs Range
+    public EnemyAttackType attackType;
 }
 
 [System.Serializable]
@@ -19,11 +20,18 @@ public class EnemySpawnPool
     [Range(0f, 100f)]
     public float spawnWeight = 50f;
 }
+=======
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class MixedNightWaveData
 {
+<<<<<<< HEAD
     public string nightName = "Night 1";
+=======
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+    public GameObject[] spawnOrder;
     public float spawnInterval = 1.5f;
 
     [Header("ลำดับศัตรูที่แน่นอน (Queue Sequence - ปิดการสุ่ม)")]
@@ -39,6 +47,7 @@ public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance;
 
+<<<<<<< HEAD
     [Header("คลังอ้างอิงศัตรูทั้งหมด (Master Enemy Reference Catalog)")]
     [Tooltip("รายการศัตรูทั้งหมดเป็น reference ให้กับเวฟ data ตามโจทย์อาจารย์")]
     [SerializeField] private List<EnemyCatalogEntry> enemyCatalog = new List<EnemyCatalogEntry>();
@@ -51,21 +60,33 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private GameObject spitterPrefab;
 
     [Header("ตั้งค่าเวฟ (Night Waves)")]
+=======
+    [Header("Night Waves")]
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private List<MixedNightWaveData> nightWaves;
     public int currentWaveIndex = 0;
+    [SerializeField] private GameObject runSetupPanel;
+    [SerializeField] private TMP_InputField nightsInput;
+    [SerializeField] private Button beginButton;
+    [SerializeField] private TextMeshProUGUI setupHint;
+    private int totalNights = 7;
+    private bool runStarted;
+    private bool endingWave;
+    private bool shopOpen;
 
-    [Header("จุดเกิดศัตรู")]
+
+    [Header("Enemy Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
 
-    [Header("ตั้งค่าหน้าจอตอนเช้า (Morning Screen)")]
+    [Header("Morning Shop")]
     [SerializeField] private GameObject morningScreenPanel;
     [SerializeField] private Button nextNightButton;
     [SerializeField] private TextMeshProUGUI buttonText;
 
-    [Header("ตั้งค่าหน้าจอชนะเกม (Victory Screen)")]
+    [Header("Victory Screen")]
     [SerializeField] private GameObject victoryPanel;
 
-    [Header("ตั้งค่าหน่วงเวลาก่อนจบเวฟ")]
+    [Header("Wave End Delay")]
     [SerializeField] private float delayAfterWave = 2.0f;
 
     // --- DATA STRUCTURES (Queue FIFO + List) ---
@@ -225,25 +246,52 @@ public class WaveManager : MonoBehaviour
             nextNightButton.onClick.AddListener(OnProceedToNextNight);
         }
 
-        StartCoroutine(StartWave(currentWaveIndex));
+        if (runSetupPanel != null)
+        {
+            Time.timeScale = 0f;
+            runSetupPanel.SetActive(true);
+            nightsInput.SetTextWithoutNotify("7");
+            nightsInput.onValueChanged.AddListener(ValidateNightCount);
+            ValidateNightCount(nightsInput.text);
+        }
+        else BeginRun();
+    }
+
+    private void ValidateNightCount(string value)
+    {
+        bool valid = int.TryParse(value, out int count) && count > 0;
+        beginButton.interactable = valid;
+        setupHint.text = valid ? "Survive the final night to win." : "Enter a whole number of at least 1.";
+    }
+
+    public void BeginRun()
+    {
+        if (runStarted) return;
+        if (nightsInput != null && (!int.TryParse(nightsInput.text, out totalNights) || totalNights < 1)) return;
+        runStarted = true;
+        currentWaveIndex = 0;
+        if (runSetupPanel != null) runSetupPanel.SetActive(false);
+        GameManager.Instance.SetCurrentNight(1);
+        GameManager.Instance.SetGameState(GameState.NightDefense);
+        Time.timeScale = 1f;
+        StartCoroutine(StartWave(0));
     }
 
     public IEnumerator StartWave(int waveIndex)
     {
-        if (nightWaves == null || waveIndex >= nightWaves.Count)
+        if (nightWaves == null || nightWaves.Count == 0 || waveIndex >= totalNights)
         {
             yield break;
         }
 
+<<<<<<< HEAD
         MixedNightWaveData currentWave = nightWaves[waveIndex];
         Debug.Log($"--- เริ่มต้น {currentWave.nightName} (Wave {waveIndex + 1}/{nightWaves.Count}) ---");
 
-        // 1. นำข้อมูลศัตรูทั้งหมดของเวฟนี้เข้าสู่ Queue (FIFO) - ปิดการสุ่มโดยสิ้นเชิง
         spawnQueue.Clear();
 
         if (currentWave.enemySequence != null && currentWave.enemySequence.Count > 0)
         {
-            // ดึงจาก Master Catalog ด้วย Queue ตามลำดับแน่นอน
             foreach (string enemyId in currentWave.enemySequence)
             {
                 if (enemyCatalogDict.TryGetValue(enemyId, out GameObject prefab))
@@ -258,7 +306,6 @@ public class WaveManager : MonoBehaviour
         }
         else if (currentWave.enemyPool != null && currentWave.enemyPool.Count > 0)
         {
-            // Fallback ปิดการสุ่ม: เรียงคิวตามลำดับแบบแน่นอน (Deterministic Queue)
             for (int i = 0; i < currentWave.totalEnemiesToSpawn; i++)
             {
                 GameObject prefab = currentWave.enemyPool[i % currentWave.enemyPool.Count].enemyPrefab;
@@ -268,11 +315,24 @@ public class WaveManager : MonoBehaviour
                 }
             }
         }
+        else if (currentWave.spawnOrder != null)
+        {
+            foreach (GameObject prefab in currentWave.spawnOrder)
+            {
+                if (prefab != null) spawnQueue.Enqueue(prefab);
+            }
+        }
+=======
+        var currentWave = nightWaves[Mathf.Min(waveIndex, nightWaves.Count - 1)];
+        spawnQueue.Clear();
+        foreach (var prefab in currentWave.spawnOrder)
+            spawnQueue.Enqueue(prefab);
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 
         Debug.Log($"[WaveManager] บรรจุศัตรูเข้าคิว Queue: {spawnQueue.Count} ตัว (ปิดการสุ่ม)");
         isSpawningWave = true;
 
-        // 2. ทยอยดึงจาก Queue (Dequeue) แล้วปล่อยออกมาตาม Interval
+        // Spawn enemies from the queue at the configured interval.
         while (spawnQueue.Count > 0)
         {
             GameObject prefabToSpawn = spawnQueue.Dequeue();
@@ -286,25 +346,6 @@ public class WaveManager : MonoBehaviour
 
         isSpawningWave = false;
         CheckWaveEnd();
-    }
-
-    private GameObject GetRandomEnemyFromPool(List<EnemySpawnPool> pool)
-    {
-        if (pool == null || pool.Count == 0) return null;
-
-        float totalWeight = 0f;
-        foreach (var spawn in pool) totalWeight += spawn.spawnWeight;
-
-        float randomValue = Random.Range(0f, totalWeight);
-        float currentWeight = 0f;
-
-        foreach (var spawn in pool)
-        {
-            currentWeight += spawn.spawnWeight;
-            if (randomValue <= currentWeight) return spawn.enemyPrefab;
-        }
-
-        return pool[0].enemyPrefab;
     }
 
     private void SpawnEnemy(GameObject enemyPrefab)
@@ -332,7 +373,7 @@ public class WaveManager : MonoBehaviour
             activeEnemies.RemoveAll(item => item == null || item == enemy);
         }
 
-        Debug.Log($"ซอมบี้ตาย! เหลือในสนาม: {activeEnemies.Count} ตัว (ในคิวเกิด: {spawnQueue.Count})");
+        Debug.Log($"Enemy defeated. Active: {activeEnemies.Count}, queued: {spawnQueue.Count}.");
         CheckWaveEnd();
     }
 
@@ -346,20 +387,21 @@ public class WaveManager : MonoBehaviour
     {
         activeEnemies.RemoveAll(item => item == null || item.IsDead);
 
-        if (spawnQueue.Count == 0 && activeEnemies.Count == 0 && !isSpawningWave)
+        if (runStarted && !endingWave && spawnQueue.Count == 0 && activeEnemies.Count == 0 && !isSpawningWave)
         {
+            endingWave = true;
             StartCoroutine(WaitAndEndWaveCoroutine());
         }
     }
 
     private IEnumerator WaitAndEndWaveCoroutine()
     {
-        Debug.Log("เคลียร์ซอมบี้หมดแล้ว! รอหน่วงเวลาเปลี่ยนรอบ...");
+        Debug.Log("Wave cleared. Waiting for the end-of-wave transition.");
         yield return new WaitForSeconds(delayAfterWave);
 
-        if (currentWaveIndex >= nightWaves.Count - 1)
+        if (currentWaveIndex >= totalNights - 1)
         {
-            Debug.Log("🎉 VICTORY! ชนะเกมแล้ว! เอาชีวิตรอดครบทุกคืน!");
+            Debug.Log("Victory! All nights survived.");
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.TriggerVictory();
@@ -373,7 +415,7 @@ public class WaveManager : MonoBehaviour
         }
         else
         {
-            // ได้รับกล่องเสบียงสนับสนุน (Supply Drop) ทุกครั้งที่รอดพ้นจบแต่ละคืน
+            // Award a supply drop before opening the morning shop.
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.AddCurrency(CurrencyType.Rations, 1);
@@ -388,11 +430,12 @@ public class WaveManager : MonoBehaviour
     {
         if (morningScreenPanel != null) morningScreenPanel.SetActive(true);
 
+        shopOpen = true;
         int nextNightNumber = currentWaveIndex + 2;
 
         if (buttonText != null)
         {
-            buttonText.text = $"Night {nextNightNumber}";
+            buttonText.text = $"Night {nextNightNumber} / {totalNights}";
         }
 
         Time.timeScale = 0f;
@@ -400,6 +443,9 @@ public class WaveManager : MonoBehaviour
 
     public void OnProceedToNextNight()
     {
+        if (!shopOpen) return;
+        shopOpen = false;
+        endingWave = false;
         if (morningScreenPanel != null) morningScreenPanel.SetActive(false);
         Time.timeScale = 1f;
 
@@ -412,9 +458,9 @@ public class WaveManager : MonoBehaviour
 
         StartCoroutine(StartWave(currentWaveIndex));
     }
+<<<<<<< HEAD
     private bool isQuitting = false;
 
-    // Unity จะเรียกฟังก์ชันนี้อัตโนมัติทันทีที่กดปุ่ม Stop หรือปิดเกม
     private void OnApplicationQuit()
     {
         isQuitting = true;
@@ -422,9 +468,10 @@ public class WaveManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // ถ้ากำลังปิดเกม/เปลี่ยนฉาก ให้หยุดทำงานทันที ห้ามเสก VFX หรือดรอปของเด็ดขาด
         if (isQuitting || !gameObject.scene.isLoaded) return;
-
-        // โค้ดเดิมของคุณใน OnDestroy (ถ้ามี)
     }
+=======
+
+
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
 }

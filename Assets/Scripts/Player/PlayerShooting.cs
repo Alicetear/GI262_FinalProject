@@ -2,12 +2,12 @@ using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
 {
-    [Header("ตั้งค่าการยิง")]
-    [SerializeField] private GameObject bulletPrefab; // ไฟล์ Prefab กระสุน
-    [SerializeField] private Transform firePoint;     // จุดปล่อยกระสุนปลายปืน
+    [Header("Shooting Settings")]
+    [SerializeField] private GameObject bulletPrefab; // Bullet prefab.
+    [SerializeField] private Transform firePoint;     // Projectile spawn point at the muzzle.
 
-    [Header("ควบคุมจังหวะการยิง (ทีละนัด)")]
-    [Tooltip("หน่วงเวลาระหว่างนัด (วินาที) ป้องกันกระสุนออกซ้อนกัน")]
+    [Header("Single-Shot Timing")]
+    [Tooltip("Minimum time in seconds between shots.")]
     [SerializeField] private float fireRate = 0.25f; 
 
     private float nextFireTime = 0f;
@@ -20,9 +20,24 @@ public class PlayerShooting : MonoBehaviour
         attachedWeapon = GetComponentInChildren<Weapon>();
     }
 
+    private Equipment equipment;
+    private void Awake() => equipment = GetComponent<Equipment>();
+
+    private Equipment equipment;
+    private void Awake() => equipment = GetComponent<Equipment>();
+
     private void Update()
     {
-        // 1 คลิก = 1 นัด พร้อมหน่วงเวลาตาม fireRate
+        if (Time.timeScale == 0f) return;
+        if (equipment != null && equipment.CurrentWeapon != null)
+        {
+            Weapon weapon = equipment.CurrentWeapon;
+            bool automatic = weapon.Stats != null && weapon.Stats.type == WeaponType.AssaultRifle;
+            if (automatic ? Input.GetMouseButton(0) : Input.GetMouseButtonDown(0)) weapon.Fire();
+            if (Input.GetKeyDown(KeyCode.R)) equipment.CurrentWeapon.Reload();
+            return;
+        }
+        // Fire once per click, subject to the fire interval.
         if (Input.GetMouseButtonDown(0) && Time.time >= nextFireTime)
         {
             Shoot();
@@ -35,6 +50,7 @@ public class PlayerShooting : MonoBehaviour
         // ถ้ามี Weapon ที่ติดตั้งอยู่ ให้ยิงผ่าน Weapon เพื่อใช้ระบบ Struct + Dictionary + AOE/Single
         if (playerEquipment != null && playerEquipment.CurrentWeapon != null)
         {
+<<<<<<< HEAD
             playerEquipment.CurrentWeapon.Fire();
             return;
         }
@@ -47,18 +63,24 @@ public class PlayerShooting : MonoBehaviour
 
         if (firePoint == null)
         {
-            Debug.LogWarning("ลืมใส่ Fire Point ใน Inspector หรือเปล่า!");
+            Debug.LogWarning("Assign a Fire Point in the Inspector before shooting.");
             return;
         }
 
-        // นำระบบ Object Pooling มาใช้ (Queue FIFO)
+=======
+            Debug.LogWarning("Assign a Fire Point in the Inspector before shooting.");
+            return;
+        }
+
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
+        // Get a bullet from the FIFO pool.
         if (BulletPool.Instance != null)
         {
             BulletPool.Instance.SpawnBullet(firePoint.position, firePoint.rotation);
             return;
         }
 
-        // Fallback กรณีไม่ได้ใช้ BulletPool
+        // Instantiate a bullet when there is no pool.
         if (bulletPrefab != null)
         {
             Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);

@@ -191,11 +191,16 @@ MonoBehaviour:
   rewardCash: 20
   rewardScrap: 10
   rewardScore: 100
+<<<<<<< HEAD
+  acidProjectilePrefab: {fileID: 773096141354130232, guid: 3674300a2bb0b434a97894da5eab7862, type: 3}
   acidPrefab: {fileID: 773096141354130232, guid: 3674300a2bb0b434a97894da5eab7862, type: 3}
+=======
+  acidPrefab: {fileID: 773096141354130232, guid: e3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8, type: 3}
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
   spitPoint: {fileID: 4345831106155745785}
   stopDistanceToWall: 5.5
   spitCooldown: 2.5
-  spitterSprite: {fileID: 0}
+  spitterSprite: {fileID: 21300000, guid: 772bf5cf8b2e4204fa933f2a9639b6c2, type: 3}
 --- !u!1 &2388971973773856863
 GameObject:
   m_ObjectHideFlags: 0

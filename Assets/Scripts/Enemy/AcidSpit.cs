@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AcidSpit : MonoBehaviour
 {
-    [Header("สเตตัสกระสุนกรด")]
+    [Header("Acid Projectile")]
     [SerializeField] private float speed = 8f;
     [SerializeField] private int damage = 15;
     [SerializeField] private float lifeTime = 5f;
@@ -50,7 +50,7 @@ public class AcidSpit : MonoBehaviour
             if (barricade != null)
             {
                 barricade.TakeDamage(damage);
-                Debug.Log($"กรดกัดกร่อนกำแพง! ดาเมจ: {damage}");
+                Debug.Log($"Acid hit the barricade for {damage} damage.");
             }
             Destroy(gameObject);
             return;
@@ -58,7 +58,7 @@ public class AcidSpit : MonoBehaviour
 
         if (hitObj.CompareTag("Player"))
         {
-            Debug.Log($"ผู้เล่นโดนน้ำกรด! ดาเมจ: {damage}");
+            Debug.Log($"Acid hit the player for {damage} damage.");
             Destroy(gameObject);
             return;
         }

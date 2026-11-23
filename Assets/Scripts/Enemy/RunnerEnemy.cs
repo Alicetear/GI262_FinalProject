@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class RunnerEnemy : BaseEnemy
 {
-    [Header("ตั้งค่าสไปรต์เฉพาะตัวของ Runner")]
-    [SerializeField] private Sprite runnerSprite; // ช่องสำหรับลากรูปสไปรต์ซอมบี้วิ่งมาใส่
+    [Header("Runner Sprite")]
+    [SerializeField] private Sprite runnerSprite; // Assign the runner sprite here.
     private SpriteRenderer spriteRenderer;
 
     protected override void Start()
@@ -11,15 +11,15 @@ public class RunnerEnemy : BaseEnemy
         attackType = EnemyAttackType.Melee;
         base.Start();
 
-        // เซ็ตสเตตัสความเร็วและเลือดของ Runner
+        // Set the runner's speed and health.
         moveSpeed = 6.0f;
         maxHealth = 15;
         currentHealth = maxHealth;
 
-        // ดึงคอมโพเนนต์ SpriteRenderer ออกมาควบคุม
+        // Get the renderer used by this enemy.
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        // ถ้ามีการใส่สไปรต์รูปวิ่งไว้ ให้ทำการเปลี่ยนรูปทันทีตอนเกิด
+        // Apply the runner sprite on spawn if one is assigned.
         if (runnerSprite != null && spriteRenderer != null)
         {
             spriteRenderer.sprite = runnerSprite;

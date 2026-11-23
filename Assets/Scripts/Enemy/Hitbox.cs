@@ -2,10 +2,11 @@ using UnityEngine;
 
 public class Hitbox : MonoBehaviour
 {
-    [Header("ตั้งค่าชิ้นส่วน")]
-    [SerializeField] private BaseEnemy mainEnemy; // ลากตัวแม่มาใส่
-    [SerializeField] private float damageMultiplier = 1.0f; // ตัวคูณดาเมจ (เช่น หัว = 2.0, ตัว = 1.0)
+    [Header("Hitbox Settings")]
+    [SerializeField] private BaseEnemy mainEnemy; // Assign the enemy that owns this hitbox.
+    [SerializeField] private float damageMultiplier = 1.0f; // Damage multiplier (head: 2, body: 1).
 
+<<<<<<< HEAD
     public BaseEnemy MainEnemy
     {
         get
@@ -23,7 +24,7 @@ public class Hitbox : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันนี้จะถูกเรียกจากกระสุนปืน
+    // Called when a bullet hits this collider.
     public void TakeHit(int baseDamage)
     {
         TakeHit(baseDamage, transform.position, Vector2.left);
@@ -36,17 +37,29 @@ public class Hitbox : MonoBehaviour
             mainEnemy = GetComponentInParent<BaseEnemy>();
         }
 
-        // คำนวณดาเมจใหม่ (ดาเมจพื้นฐาน x ตัวคูณ)
+        // Scale the base damage for the body part that was hit.
+
+=======
+    // Called when a bullet hits this collider.
+    public void TakeHit(int baseDamage)
+    {
+        // Scale the base damage for the body part that was hit.
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         int finalDamage = Mathf.RoundToInt(baseDamage * damageMultiplier);
 
         if (mainEnemy != null)
         {
+<<<<<<< HEAD
             Debug.Log($"ยิงโดน {gameObject.name}! ดาเมจที่ทำได้: {finalDamage}");
             mainEnemy.TakeDamage(finalDamage, hitPoint, hitDirection);
         }
         else
         {
             Debug.LogWarning($"[Hitbox] ไม่พบ BaseEnemy บน {gameObject.name} หรือ Parent!");
+=======
+            Debug.Log($"Hit {gameObject.name} for {finalDamage} damage.");
+            mainEnemy.TakeDamage(finalDamage);
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         }
     }
 }

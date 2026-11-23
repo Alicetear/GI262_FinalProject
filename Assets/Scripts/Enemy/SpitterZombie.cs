@@ -2,12 +2,23 @@ using UnityEngine;
 
 public class SpitterZombie : BaseEnemy
 {
+<<<<<<< HEAD
     [Header("สเตตัสเฉพาะตัว: Spitter (พ่นกรดระยะไกล)")]
-    [SerializeField] private float spitRange = 6f;                  // ระยะห่างจาก Barricade ที่จะหยุดเดินเพื่อพ่นกรด
-    [SerializeField] private GameObject acidProjectilePrefab;       // Prefab ก้อนกรด (ติด AcidProjectile.cs)
-    [SerializeField] private Transform mouthPoint;                  // จุดปล่อยกรดจากปาก
-    [SerializeField] private float spitCooldown = 2.5f;             // คูลดาวน์สำรองกรณีไม่มี Animator / Animation Event
-    [SerializeField] private bool useAnimationEventOnly = false;    // ติ๊กถูกถ้าใช้ Animation Event เรียก SpitAcid() อย่างเดียว
+    [SerializeField] private float spitRange = 6f;
+    [SerializeField] private float stopDistanceToWall = 5.5f;
+    [SerializeField] private GameObject acidProjectilePrefab;
+    [SerializeField] private GameObject acidPrefab;
+    [SerializeField] private Transform mouthPoint;
+    [SerializeField] private Transform spitPoint;
+    [SerializeField] private float spitCooldown = 2.5f;
+    [SerializeField] private bool useAnimationEventOnly = false;
+=======
+    [Header("Spitter Ranged Attack")]
+    [SerializeField] private GameObject acidPrefab;           // Acid projectile prefab.
+    [SerializeField] private Transform spitPoint;             // Projectile spawn point.
+    [SerializeField] private float stopDistanceToWall = 5.5f; // Distance from the barricade at which the spitter stops to attack.
+    [SerializeField] private float spitCooldown = 2.5f;       // Seconds between acid shots.
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] private Sprite spitterSprite;
 
     private float currentSpitTimer = 0.5f;
@@ -52,6 +63,19 @@ public class SpitterZombie : BaseEnemy
     protected override void FixedUpdate()
     {
         if (isDead) return;
+
+        float wallX = wallTransform != null ? wallTransform.position.x : 6.46f;
+        float distanceToWall = wallX - transform.position.x;
+        float stopDistance = stopDistanceToWall > 0f ? stopDistanceToWall : spitRange;
+
+        if (distanceToWall <= stopDistance)
+        {
+            if (!isInSpitStance)
+            {
+                isInSpitStance = true;
+                Debug.Log($"{gameObject.name} is in spitting range.");
+            }
+        }
 
         if (!isInSpitStance && !hasReachedWall)
         {
@@ -127,7 +151,19 @@ public class SpitterZombie : BaseEnemy
                 legacySpit.SetDirection(directionToWall);
             }
 
+            AcidSpit spit = acidObj.GetComponent<AcidSpit>();
+            if (spit == null)
+            {
+                spit = acidObj.AddComponent<AcidSpit>();
+            }
+
+<<<<<<< HEAD
+            spit.SetDirection(directionToWall);
             Debug.Log($"🔥 {gameObject.name} พ่นน้ำกรดไปยัง Barricade!");
+=======
+            spit.SetDirection(Vector2.right);
+            Debug.Log($"{gameObject.name} fired an acid projectile.");
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
         }
         else
         {

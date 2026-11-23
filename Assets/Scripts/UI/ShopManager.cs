@@ -7,28 +7,106 @@ public class ShopManager : MonoBehaviour
 {
     public static ShopManager Instance { get; private set; }
 
-    [Header("การตั้งค่าซ่อมและอัปเกรดกำแพง (ใช้ Scrap)")]
-    [SerializeField] private int repairScrapCost = 10;
+    [Header("Barricade Repairs and Upgrades (Scrap)")]
+    [SerializeField] private int repairScrapCost = 20;
     [SerializeField] private int repairHealthAmount = 250;
     [SerializeField] private int upgradeWallScrapCost = 50;
     [SerializeField] private int upgradeWallHealthAmount = 300;
 
-    [Header("การตั้งค่าจ้างเพื่อนร่วมทีม AI (ใช้ Rations)")]
+    [Header("Companion Recruitment (Rations)")]
     [SerializeField] private int recruitRationCost = 2;
     [SerializeField] private GameObject companionPrefab;
-    [SerializeField] private Transform[] companionStations; // จุดประจำตำแหน่งสูงสุด 3 จุด
+    [SerializeField] private Transform[] companionStations; // Up to three guard posts.
     private List<GameObject> activeCompanions = new List<GameObject>();
 
-    [Header("UI แสดงผลทรัพยากรในร้านค้า")]
+    [Header("Shop Currency Display")]
     [SerializeField] private TextMeshProUGUI cashText;
     [SerializeField] private TextMeshProUGUI scrapText;
     [SerializeField] private TextMeshProUGUI rationsText;
 
-    [Header("UI แสดงเลือดกำแพง (Wall Health)")]
-    [Tooltip("ข้อความแสดงเลือดกำแพง เช่น Wall HP: 750 / 1000 (75%)")]
+    [Header("Barricade Health Display")]
+    [Tooltip("Displays barricade health, for example: Wall HP: 750 / 1000 (75%).")]
     [SerializeField] private TextMeshProUGUI barricadeHpText;
-    [Tooltip("แถบ Slider แสดงเลือดกำแพง (ใส่หรือไม่ใส่ก็ได้)")]
+    [Tooltip("Optional slider showing the fraction of barricade health remaining.")]
     [SerializeField] private Slider barricadeHpSlider;
+
+    [SerializeField] private Equipment playerEquipment;
+    [SerializeField] private Button upgradeWeaponButton, upgradeWallButton, recruitButton, repairButton;
+    [SerializeField] private TextMeshProUGUI upgradeWeaponLabel, recruitLabel, weaponDetails;
+
+    [SerializeField] private GameObject armoryPage, basePage;
+    [SerializeField] private Button armoryTab, baseTab;
+    [SerializeField] private Button[] ownerButtons, weaponButtons;
+    [SerializeField] private TextMeshProUGUI[] weaponStates;
+    [SerializeField] private Image[] rackWeapons;
+    [SerializeField, Min(1)] private int shotgunPrice = 125;
+    [SerializeField, Min(1)] private int assaultRiflePrice = 175;
+    private readonly HashSet<WeaponType> unlockedWeapons = new HashSet<WeaponType> { WeaponType.Pistol };
+
+    public bool IsUnlocked(WeaponType type) => unlockedWeapons.Contains(type);
+
+    private int UnlockPrice(WeaponType type) => type == WeaponType.AssaultRifle ? assaultRiflePrice : shotgunPrice;
+    private int selectedOwner;
+
+    private Equipment SelectedEquipment => selectedOwner == 0 ? playerEquipment :
+        activeCompanions[selectedOwner - 1].GetComponent<Equipment>();
+
+    public void ShowArmory(bool show)
+    {
+        armoryPage.SetActive(show);
+        basePage.SetActive(!show);
+        armoryTab.interactable = !show;
+        baseTab.interactable = show;
+        UpdateShopUI();
+    }
+
+    public void SelectOwner(int index)
+    {
+        if (index < 0 || index > activeCompanions.Count) return;
+        selectedOwner = index;
+        UpdateShopUI();
+    }
+
+    public void SelectArmoryWeapon(int index)
+    {
+        var type = (WeaponType)index;
+        if (index < 0 || index >= weaponButtons.Length) return;
+        if (!IsUnlocked(type))
+        {
+            if (!GameManager.Instance.SpendCurrency(CurrencyType.Cash, UnlockPrice(type))) return;
+            unlockedWeapons.Add(type);
+        }
+        else SelectedEquipment.SelectWeapon(type);
+        UpdateShopUI();
+    }
+
+    private void UpdateArmory(Weapon selected)
+    {
+        if (weaponButtons == null || selected == null) return;
+        for (int i = 0; i < ownerButtons.Length; i++)
+        {
+            bool available = i <= activeCompanions.Count;
+            ownerButtons[i].interactable = available && i != selectedOwner;
+            string name = i == 0 ? "Player" : $"Post {i}";
+            ownerButtons[i].GetComponentInChildren<TextMeshProUGUI>(true).text =
+                !available ? name + " / Vacant" : i == selectedOwner ? "[" + name + "]" : name;
+        }
+        for (int i = 0; i < weaponButtons.Length; i++)
+        {
+            var type = (WeaponType)i;
+            bool locked = !IsUnlocked(type);
+            bool equipped = selected.Stats.type == type;
+            rackWeapons[i].color = locked ? new Color32(24, 21, 17, 104) : Color.white;
+            var kit = SelectedEquipment;
+            bool inLoadout = kit.PrimaryWeapon?.Stats.type == type || kit.SecondaryWeapon?.Stats.type == type;
+            var state = weaponStates[i];
+            state.text = locked ? "LOCKED" : equipped ? "EQUIPPED" : inLoadout ? "HOLSTERED" : "UNLOCKED";
+            state.color = locked ? new Color32(217,158,120,255) : equipped ? new Color32(167,202,162,255) : new Color32(207,203,188,255);
+            var button = weaponButtons[i];
+            button.interactable = locked ? GameManager.Instance.Cash >= UnlockPrice(type) : !equipped;
+            button.GetComponentInChildren<TextMeshProUGUI>(true).text = locked ? $"Unlock / ${UnlockPrice(type)}" : equipped ? "In use" : inLoadout ? "Switch" : "Equip";
+        }
+    }
 
     private void Awake()
     {
@@ -43,11 +121,13 @@ public class ShopManager : MonoBehaviour
             GameManager.Instance.OnCurrencyChanged += UpdateShopUI;
         }
 
+        if (playerEquipment != null) playerEquipment.Changed += UpdateShopUI;
         UpdateShopUI();
     }
 
     private void OnDestroy()
     {
+        if (playerEquipment != null) playerEquipment.Changed -= UpdateShopUI;
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnCurrencyChanged -= UpdateShopUI;
@@ -56,13 +136,13 @@ public class ShopManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // อัปเดตข้อมูลเลือดกำแพงและเงินทันทีที่หน้าต่างร้านค้าเปิดขึ้นมาตอนเช้า
+        // Refresh balances and barricade health when the morning shop opens.
         UpdateShopUI();
     }
 
     public void UpdateShopUI()
     {
-        // 1. อัปเดตตัวเลขเงิน
+        // Update currency balances.
         if (GameManager.Instance != null)
         {
             if (cashText != null) cashText.text = $"Cash: ${GameManager.Instance.Cash}";
@@ -70,28 +150,41 @@ public class ShopManager : MonoBehaviour
             if (rationsText != null) rationsText.text = $"Rations: {GameManager.Instance.Rations}";
         }
 
-        // 2. อัปเดตเลือดกำแพง
+        Weapon selected = SelectedEquipment != null ? SelectedEquipment.CurrentWeapon : null;
+        int price = selected != null ? selected.GetNextUpgradeCost() : 0;
+        if (weaponDetails != null && selected != null)
+            weaponDetails.text = $"DMG {selected.CurrentDamage}   MAG {selected.MaxAmmo}   RELOAD {selected.CurrentReloadTime:0.##}s";
+        if (upgradeWeaponLabel != null && selected != null)
+            upgradeWeaponLabel.text = price > 0 ? $"Upgrade {selected.Stats.weaponName}   /   ${price}" : $"{selected.Stats.weaponName}   /   Max level";
+        if (upgradeWeaponButton != null) upgradeWeaponButton.interactable = price > 0 && GameManager.Instance.Cash >= price;
+        UpdateArmory(selected);
+        int slots = companionStations == null ? 0 : companionStations.Length;
+        if (recruitButton != null) recruitButton.interactable = companionPrefab != null && activeCompanions.Count < slots && GameManager.Instance.Rations >= recruitRationCost;
+        if (recruitLabel != null) recruitLabel.text = $"Recruit   /   {recruitRationCost} rations   ({activeCompanions.Count}/{slots})";
+        // Update barricade health.
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
         if (wall != null)
         {
+            if (upgradeWallButton != null) upgradeWallButton.interactable = GameManager.Instance.Scrap >= upgradeWallScrapCost;
+            if (repairButton != null) repairButton.interactable = wall.CurrentHealth < wall.MaxHealth && GameManager.Instance.Scrap >= repairScrapCost;
             float hpPercent = wall.MaxHealth > 0 ? (float)wall.CurrentHealth / wall.MaxHealth : 0f;
             int percentInt = Mathf.RoundToInt(hpPercent * 100f);
 
-            // อัปเดตข้อความตัวเลข
+            // Display current and maximum HP.
             if (barricadeHpText != null)
             {
                 barricadeHpText.text = $"Wall HP: {wall.CurrentHealth} / {wall.MaxHealth} ({percentInt}%)";
 
-                // เปลี่ยนสีข้อความตามสถานะเลือด (เขียว = ปลอดภัย, ส้ม = ปานกลาง, แดง = วิกฤต)
+                // Use green for healthy, amber for damaged, and red for critical health.
                 if (percentInt > 60)
-                    barricadeHpText.color = new Color(0.2f, 1f, 0.2f); // เขียว
+                    barricadeHpText.color = new Color(0.2f, 1f, 0.2f); // Healthy.
                 else if (percentInt > 30)
-                    barricadeHpText.color = new Color(1f, 0.8f, 0.1f); // ส้มเหลือง
+                    barricadeHpText.color = new Color(1f, 0.8f, 0.1f); // Damaged.
                 else
-                    barricadeHpText.color = new Color(1f, 0.2f, 0.2f); // แดง
+                    barricadeHpText.color = new Color(1f, 0.2f, 0.2f); // Critical.
             }
 
-            // อัปเดตแถบ Slider (ถ้ามี)
+            // Update the optional health bar.
             if (barricadeHpSlider != null)
             {
                 barricadeHpSlider.value = hpPercent;
@@ -99,43 +192,43 @@ public class ShopManager : MonoBehaviour
         }
     }
 
-    // 1. ซ่อมแซมกำแพงด้วย Scrap (void เพื่อให้ปุ่ม UI OnClick มองเห็นได้)
+    // Repair the barricade with scrap. This method is bound to the repair button.
     public void RepairBarricadeWithScrap()
     {
-        Debug.Log("[ShopManager] >>> ผู้เล่นกดปุ่มซ่อมกำแพง <<<");
+        Debug.Log("[ShopManager] Barricade repair requested.");
 
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
         if (wall == null)
         {
-            Debug.LogError("[ShopManager] ผิดพลาด: ไม่พบ Barricade (กำแพง) ในฉาก!");
+            Debug.LogError("[ShopManager] Cannot repair: no barricade found in the scene.");
             return;
         }
 
         if (GameManager.Instance == null)
         {
-            Debug.LogError("[ShopManager] ผิดพลาด: ไม่พบ GameManager ในฉาก!");
+            Debug.LogError("[ShopManager] Cannot repair: no GameManager found in the scene.");
             return;
         }
 
         if (wall.CurrentHealth >= wall.MaxHealth)
         {
-            Debug.LogWarning($"[ShopManager] ซ่อมไม่ได้: เลือดกำแพงเต็มอยู่แล้ว! ({wall.CurrentHealth} / {wall.MaxHealth})");
+            Debug.LogWarning($"[ShopManager] Barricade already at full health ({wall.CurrentHealth} / {wall.MaxHealth}).");
             return;
         }
 
         if (GameManager.Instance.SpendCurrency(CurrencyType.Scrap, repairScrapCost))
         {
             wall.RepairBarricade(repairHealthAmount);
-            UpdateShopUI(); // อัปเดตหน้าจอทันทีหลังจากซ่อม
-            Debug.Log($"[ShopManager] ซ่อมกำแพงสำเร็จ! เลือดเพิ่มเป็น: {wall.CurrentHealth} / {wall.MaxHealth} (ใช้ Scrap: {repairScrapCost})");
+            UpdateShopUI(); // Refresh the shop after the repair.
+            Debug.Log($"[ShopManager] Barricade repaired to {wall.CurrentHealth} / {wall.MaxHealth} HP for {repairScrapCost} scrap.");
         }
         else
         {
-            Debug.LogWarning($"[ShopManager] ซ่อมไม่ได้: Scrap ไม่พอ! (คุณมี {GameManager.Instance.Scrap} Scrap แต่ต้องใช้ {repairScrapCost} Scrap)");
+            Debug.LogWarning($"[ShopManager] Repair requires {repairScrapCost} scrap. Available: {GameManager.Instance.Scrap}.");
         }
     }
 
-    // 2. อัปเกรด Max HP กำแพงด้วย Scrap
+    // Spend scrap to increase maximum barricade health.
     public void UpgradeBarricadeMaxHPWithScrap()
     {
         Barricade wall = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
@@ -145,18 +238,18 @@ public class ShopManager : MonoBehaviour
         {
             wall.UpgradeMaxHP(upgradeWallHealthAmount);
             UpdateShopUI();
-            Debug.Log($"อัปเกรด Max HP สำเร็จ! +{upgradeWallHealthAmount} Max HP (ใช้ {upgradeWallScrapCost} Scrap)");
+            Debug.Log($"Barricade maximum HP increased by {upgradeWallHealthAmount} for {upgradeWallScrapCost} scrap.");
         }
         else
         {
-            Debug.Log("Scrap ไม่พอสำหรับอัปเกรด Max HP!");
+            Debug.Log("Insufficient scrap to upgrade barricade health.");
         }
     }
 
-    // 3. อัปเกรดสถานะปืน (Damage/Mag/Reload) ด้วย Cash
+    // Spend cash to upgrade damage, magazine capacity, and reload speed.
     public void UpgradeEquippedWeapon()
     {
-        Equipment equipment = FindAnyObjectByType<Equipment>();
+        Equipment equipment = SelectedEquipment;
         if (equipment != null && equipment.CurrentWeapon != null)
         {
             UpgradeWeapon(equipment.CurrentWeapon);
@@ -174,36 +267,37 @@ public class ShopManager : MonoBehaviour
         {
             weapon.Upgrade();
             UpdateShopUI();
-            Debug.Log($"อัปเกรดปืน {weapon.Stats?.weaponName ?? weapon.name} สำเร็จ! Level: {weapon.currentLevel}");
+            Debug.Log($"Upgraded {weapon.Stats?.weaponName ?? weapon.name} to level {weapon.currentLevel}.");
         }
         else
         {
-            Debug.Log("Cash ไม่พอสำหรับอัปเกรดปืน!");
+            Debug.Log("Insufficient cash to upgrade the weapon.");
         }
     }
 
-    // 4. จ้างเพื่อน AI มาประจำการ (สูงสุด 3 คน) ด้วย Rations
+    // Spend rations to recruit a guard for an available post.
     public void RecruitCompanion()
     {
-        if (GameManager.Instance == null || companionPrefab == null) return;
+        if (GameManager.Instance == null || companionPrefab == null || playerEquipment == null) return;
 
         if (companionStations == null || activeCompanions.Count >= companionStations.Length)
         {
-            Debug.Log("เพื่อนร่วมทีมเต็มแล้ว! (สูงสุด 3 คน)");
+            Debug.Log("All guard posts are occupied.");
             return;
         }
 
+        Transform station = companionStations[activeCompanions.Count];
+        if (station == null || !companionPrefab.TryGetComponent<CompanionAI>(out _)) return;
         if (GameManager.Instance.SpendCurrency(CurrencyType.Rations, recruitRationCost))
         {
-            Transform spawnPoint = companionStations[activeCompanions.Count];
-            GameObject companion = Instantiate(companionPrefab, spawnPoint.position, spawnPoint.rotation);
+            GameObject companion = Instantiate(companionPrefab, station.position, Quaternion.identity);
             activeCompanions.Add(companion);
-            Debug.Log($"จ้างเพื่อน AI สำเร็จ! ประจำการตำแหน่งที่ {activeCompanions.Count}");
+            Debug.Log($"Companion recruited for post {activeCompanions.Count}.");
             UpdateShopUI();
         }
         else
         {
-            Debug.Log("Rations ไม่พอสำหรับจ้างเพื่อน AI!");
+            Debug.Log("Insufficient rations to recruit a companion.");
         }
     }
 }

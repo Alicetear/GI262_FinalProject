@@ -8,22 +8,28 @@ public enum EnemyAttackType
 
 public class BaseEnemy : MonoBehaviour
 {
+<<<<<<< HEAD
     [Header("ประเภทศัตรู (Data Classification: Melee vs Range)")]
     [SerializeField] protected EnemyAttackType attackType = EnemyAttackType.Melee;
     public EnemyAttackType AttackType => attackType;
 
+    [Header("Enemy Stats")]
+
     [Header("ตั้งค่าพื้นฐานศัตรู")]
+=======
+    [Header("Enemy Stats")]
+>>>>>>> d8ee8a61bf1f885c5b6c1c0a93acacfb51fa0830
     [SerializeField] protected int maxHealth = 30;
     protected int currentHealth;
     [SerializeField] protected float moveSpeed = 3f;
     [SerializeField] protected int attackDamage = 10;
 
-    [Header("ตั้งค่าการโจมตี")]
-    [SerializeField] protected float attackCooldown = 1.5f; // ความเร็วในการตี (วินาที/ครั้ง)
-    private float currentAttackTimer = 0f; // ตัวนับเวลา
-    private Barricade targetBarricade = null; // เก็บเป้าหมายกำแพงที่กำลังตีอยู่
+    [Header("Attack Settings")]
+    [SerializeField] protected float attackCooldown = 1.5f; // Seconds between attacks.
+    private float currentAttackTimer = 0f; // Time until the next attack.
+    private Barricade targetBarricade = null; // Barricade currently under attack.
 
-    [Header("รางวัลเมื่อกำจัดได้ (Rewards)")]
+    [Header("Defeat Rewards")]
     [SerializeField] protected int rewardCash = 15;
     [SerializeField] protected int rewardScrap = 5;
     [SerializeField] protected int rewardScore = 100;
@@ -134,7 +140,7 @@ public class BaseEnemy : MonoBehaviour
         if (targetBarricade != null)
         {
             targetBarricade.TakeDamage(attackDamage);
-            Debug.Log($"{gameObject.name} กำลังตีกำแพง! ดาเมจ: {attackDamage}");
+            Debug.Log($"{gameObject.name} hit the barricade for {attackDamage} damage.");
         }
     }
 
