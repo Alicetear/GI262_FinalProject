@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57b4d2fe0a59dcc4694c73a4a0a22906, type: 3}
+  m_Name: Shotgun
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponStats
+  type: 1
+  pelletCount: 5
+  spreadAngle: 24
+  weaponName: Shotgun
+  maxLevel: 5
+  baseDamage: 6
+  damageGrowthPerLevel: 2
+  baseFireInterval: 0.8
+  fireRateImprovementPerLevel: 0.03
+  baseMaxAmmo: 5
+  ammoGrowthPerLevel: 3
+  baseReloadTime: 2.4
+  reloadReductionPerLevel: 0.15
+  baseUpgradeCost: 100
+  costMultiplier: 1.5

@@ -18,12 +18,16 @@ public enum GameState
 
 public class GameManager : MonoBehaviour
 {
+    private static bool isQuitting = false;
     private static GameManager instance;
 
     public static GameManager Instance
     {
         get
         {
+            // ป้องกันการสร้าง GameManager (Auto) ขึ้นมาใหม่ตอนที่แอปพลิเคชันกำลังปิดตัว
+            if (isQuitting) return null;
+
             if (instance == null)
             {
                 instance = FindAnyObjectByType<GameManager>();
@@ -39,9 +43,9 @@ public class GameManager : MonoBehaviour
     }
 
     [Header("ระบบเศรษฐกิจ (3 Currencies)")]
-    [SerializeField] private int cash = 200;      // ใช้ซื้อปืน/อัปเกรดปืน
-    [SerializeField] private int scrap = 50;      // ใช้ซ่อมแซม/อัปเกรดกำแพง
-    [SerializeField] private int rations = 1;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
+    [SerializeField] private int cash = 0;        // ใช้ซื้อปืน/อัปเกรดปืน (เริ่มต้น $0)
+    [SerializeField] private int scrap = 0;       // ใช้ซ่อมแซม/อัปเกรดกำแพง
+    [SerializeField] private int rations = 0;     // ใช้จ้างเพื่อน AI/ฟื้นฟูเลือด
 
     [Header("คะแนนและคืนปัจจุบัน")]
     [SerializeField] private int score = 0;
@@ -61,19 +65,35 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        isQuitting = false;
+
         if (instance == null)
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // ให้ค่าเริ่มต้นป้องกันค่า 0 จาก Inspector ใน Scene
-            if (cash < 200) cash = 200;
-            if (scrap < 50) scrap = 50;
-            if (rations < 1) rations = 1;
+            // คืนที่ 1 เริ่มต้นเงิน (Cash) ที่ $0 เสมอ
+            if (currentNight <= 1)
+            {
+                cash = 0;
+            }
         }
         else if (instance != this)
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        isQuitting = true;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
         }
     }
 

@@ -281,7 +281,7 @@ Transform:
   m_GameObject: {fileID: 337895621}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: 3.13, z: 0}
+  m_LocalPosition: {x: -10, y: 2.73, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -316,6 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64b6557da23b74d4f8982d50bd42d3c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
+  menuFrame: {fileID: 0}
   optionsPanel: {fileID: 0}
   gameSceneName: GameScene
   mainMenuSceneName: MainMenu
@@ -2423,22 +2424,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 953a943b61abc234cb01d1c653764696, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaveManager
+  enemyCatalog: []
+  walkerPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
+  runnerPrefab: {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
+  fatPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
+  spitterPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
   nightWaves:
   - nightName: 1
+    spawnInterval: 2.5
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
     enemyPool:
     - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
       spawnWeight: 100
     totalEnemiesToSpawn: 2
-    spawnInterval: 1.5
   - nightName: 2
+    spawnInterval: 2
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
     enemyPool:
     - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
       spawnWeight: 50
     - enemyPrefab: {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
       spawnWeight: 50
     totalEnemiesToSpawn: 3
-    spawnInterval: 1.5
   - nightName: 3
+    spawnInterval: 1.8
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
     enemyPool:
     - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
       spawnWeight: 40
@@ -2447,8 +2482,24 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
       spawnWeight: 20
     totalEnemiesToSpawn: 3
-    spawnInterval: 1.5
-  - nightName: 3
+  - nightName: 4
+    spawnInterval: 1.6
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Fat '
     enemyPool:
     - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
       spawnWeight: 40
@@ -2459,7 +2510,125 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
       spawnWeight: 20
     totalEnemiesToSpawn: 3
-    spawnInterval: 1.5
+  - nightName: 5
+    spawnInterval: 1.4
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    enemyPool:
+    - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
+      spawnWeight: 20
+    - enemyPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
+      spawnWeight: 20
+    totalEnemiesToSpawn: 3
+  - nightName: 6
+    spawnInterval: 1.4
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Spitter '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    - 'Fat '
+    enemyPool:
+    - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
+      spawnWeight: 20
+    - enemyPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
+      spawnWeight: 20
+    totalEnemiesToSpawn: 3
+  - nightName: 6
+    spawnInterval: 1.4
+    enemySequence:
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Walker '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 'Runner '
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    enemyPool:
+    - enemyPrefab: {fileID: 1451789939388533383, guid: fea9b77b208120a4d951590828da6e5f, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: d0721be261f587644a583c4fac14e7c9, type: 3}
+      spawnWeight: 40
+    - enemyPrefab: {fileID: 8231189729249653546, guid: 314360039ce19fc47b52fc39cebac40a, type: 3}
+      spawnWeight: 20
+    - enemyPrefab: {fileID: 1451789939388533383, guid: 3fcea8b5a0b938e46a67ec1a85f7ff0e, type: 3}
+      spawnWeight: 20
+    totalEnemiesToSpawn: 3
   currentWaveIndex: 0
   spawnPoints:
   - {fileID: 1897496656}
@@ -2469,7 +2638,8 @@ MonoBehaviour:
   nextNightButton: {fileID: 1255385954}
   buttonText: {fileID: 781493499}
   victoryPanel: {fileID: 1063114103}
-  delayAfterWave: 2
+  delayAfterWave: 2.5
+  maxCorpses: 20
 --- !u!1 &1682275959
 GameObject:
   m_ObjectHideFlags: 0
@@ -2792,7 +2962,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1942182605
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3018,7 +3188,7 @@ Transform:
   m_GameObject: {fileID: 2083578912}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: -2.08, z: 0}
+  m_LocalPosition: {x: -10, y: -2.91, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3146,7 +3316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99dacff2978d12e4c8c6936aa2f091c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  cash: 200
+  cash: 0
   scrap: 50
   rations: 1
   score: 0

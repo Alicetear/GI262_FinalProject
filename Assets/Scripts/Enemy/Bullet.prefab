@@ -183,6 +183,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Bullet
   speed: 15
   bulletDamage: 10
+  behaviorType: 0
+  aoeRadius: 2.5
   lifeTime: 4
 --- !u!114 &-3661464265061652646
 MonoBehaviour:

@@ -7,7 +7,16 @@ public class AcidSpit : MonoBehaviour
     [SerializeField] private int damage = 15;
     [SerializeField] private float lifeTime = 5f;
 
+    [Header("เอฟเฟกต์กรดแตก (AcidSplash_VFX)")]
+    [SerializeField] private GameObject splashVfxPrefab;
+
     private Vector2 moveDirection = Vector2.right;
+    private bool hasHit = false;
+
+    public void SetDamage(int newDamage)
+    {
+        damage = newDamage;
+    }
 
     public void SetDirection(Vector2 direction)
     {
@@ -32,35 +41,53 @@ public class AcidSpit : MonoBehaviour
         transform.Translate(Vector3.right * speed * Time.deltaTime, Space.Self);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        HandleHit(collision.gameObject);
+        if (other.CompareTag("Enemy") || other.GetComponentInParent<BaseEnemy>() != null) return;
+        HandleHit(other.gameObject);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (collision.gameObject.CompareTag("Enemy") || collision.gameObject.GetComponentInParent<BaseEnemy>() != null) return;
         HandleHit(collision.gameObject);
     }
 
     private void HandleHit(GameObject hitObj)
     {
-        if (hitObj.CompareTag("Wall"))
+        if (hasHit || hitObj == null) return;
+
+        // ไม่ให้กระสุนกรดชนกับตัวซอมบี้เอง (Enemy / Hitbox)
+        if (hitObj.CompareTag("Enemy") ||
+            hitObj.GetComponent<BaseEnemy>() != null ||
+            hitObj.GetComponentInParent<BaseEnemy>() != null ||
+            hitObj.GetComponent<Hitbox>() != null)
         {
-            Barricade barricade = hitObj.GetComponent<Barricade>();
+            return;
+        }
+
+        // สร้างดาเมจและระเบิดเอฟเฟกต์เฉพาะเมื่อชนกับกำแพง (Wall / Barricade) เท่านั้น
+        if (hitObj.CompareTag("Wall") || hitObj.GetComponent<Barricade>() != null || hitObj.GetComponentInParent<Barricade>() != null)
+        {
+            hasHit = true;
+            Barricade barricade = hitObj.GetComponent<Barricade>() ?? hitObj.GetComponentInParent<Barricade>();
             if (barricade != null)
             {
                 barricade.TakeDamage(damage);
                 Debug.Log($"กรดกัดกร่อนกำแพง! ดาเมจ: {damage}");
             }
-            Destroy(gameObject);
-            return;
-        }
 
-        if (hitObj.CompareTag("Player"))
-        {
-            Debug.Log($"ผู้เล่นโดนน้ำกรด! ดาเมจ: {damage}");
+            SpawnSplashVFX();
             Destroy(gameObject);
-            return;
+        }
+    }
+
+    private void SpawnSplashVFX()
+    {
+        if (splashVfxPrefab != null)
+        {
+            GameObject splash = Instantiate(splashVfxPrefab, transform.position, Quaternion.identity);
+            Destroy(splash, 2.0f);
         }
     }
 }

@@ -3,134 +3,278 @@ using UnityEngine;
 public class SpitterZombie : BaseEnemy
 {
     [Header("สเตตัสเฉพาะตัว: Spitter (พ่นกรดระยะไกล)")]
-    [SerializeField] private GameObject acidPrefab;           // Prefab ลูกกระสุนกรด
-    [SerializeField] private Transform spitPoint;             // จุดปล่อยกรด
-    [SerializeField] private float stopDistanceToWall = 5.5f; // ระยะห่างจากกำแพงที่จะหยุดเดินเพื่อยืนยิง
-    [SerializeField] private float spitCooldown = 2.5f;       // ยิงกรดทุกๆ กี่วินาที
-    [SerializeField] private Sprite spitterSprite;
+    [Tooltip("ระยะห่างจาก Barricade ที่จะหยุดเดินเพื่อยืนพ่นกรด (เลยกลางจอเล็กน้อย)")]
+    [SerializeField] private float attackRange = 5.0f;
+    [Tooltip("Prefab ลูกกระสุนกรด (AcidProjectile หรือ AcidSpit)")]
+    [SerializeField] private GameObject acidPrefab;
+    [Tooltip("จุดปล่อยกรดที่ปากซอมบี้ (Transform ชื่อ point)")]
+    [SerializeField] private Transform spitPoint;
 
-    private float currentSpitTimer = 0.5f;
-    private bool isInSpitStance = false;
-    private SpriteRenderer spriteRenderer;
-    private Transform wallTransform;
+    [Header("ตัวแปรสำรอง (Optional)")]
+    [SerializeField] private GameObject acidProjectilePrefab;
+    [SerializeField] private Transform mouthPoint;
+
+    private Transform targetWall;
+    private float attackTimer = 0f;
+
+    protected override void Awake()
+    {
+        overrideMovement = true;
+        attackType = EnemyAttackType.Range;
+        base.Awake();
+
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
+        if (spitPoint == null)
+        {
+            spitPoint = mouthPoint != null ? mouthPoint : FindChildRecursive(transform, "point");
+        }
+    }
 
     protected override void Start()
     {
+        overrideMovement = true;
+        attackType = EnemyAttackType.Range;
         moveSpeed = 2.0f;
         maxHealth = 25;
-        currentHealth = maxHealth;
-        attackDamage = 8;
+        attackDamage = 15;
+        attackCooldown = 2.5f;
 
         base.Start();
 
-        GameObject wallObj = GameObject.FindWithTag("Wall");
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
+
+        if (spitPoint == null)
+        {
+            spitPoint = mouthPoint != null ? mouthPoint : FindChildRecursive(transform, "point");
+        }
+
+        FindTargetWall();
+
+        attackTimer = 0.5f; // หน่วงเวลาก่อนพ่นนัดแรกเล็กน้อย
+    }
+
+    private void FindTargetWall()
+    {
+        // 1. ค้นหากำแพงหลักด้วย Tag "Wall" เป็นหลัก
+        GameObject wallObj = GameObject.FindGameObjectWithTag("Wall");
         if (wallObj != null)
         {
-            wallTransform = wallObj.transform;
-        }
-        else
-        {
-            Barricade barricade = FindAnyObjectByType<Barricade>();
-            if (barricade != null)
+            targetWall = wallObj.transform;
+            if (targetBarricade == null)
             {
-                wallTransform = barricade.transform;
+                targetBarricade = wallObj.GetComponent<Barricade>() ?? wallObj.GetComponentInParent<Barricade>();
             }
+            return;
         }
 
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spitterSprite != null && spriteRenderer != null)
+        // 2. สำรองด้วย Barricade.Instance หรือ FindAnyObjectByType<Barricade>()
+        if (targetBarricade == null)
         {
-            spriteRenderer.sprite = spitterSprite;
+            targetBarricade = Barricade.Instance != null ? Barricade.Instance : FindAnyObjectByType<Barricade>();
         }
 
-        currentSpitTimer = 0.5f;
+        if (targetBarricade != null)
+        {
+            targetWall = targetBarricade.transform;
+        }
     }
 
     protected override void FixedUpdate()
     {
-        float wallX = wallTransform != null ? wallTransform.position.x : 6.46f;
-        float distanceToWall = wallX - transform.position.x;
+        if (isDead) return;
 
-        if (distanceToWall <= stopDistanceToWall)
+        if (targetWall == null)
         {
-            if (!isInSpitStance)
-            {
-                isInSpitStance = true;
-                Debug.Log($"🎯 {gameObject.name}: เข้าสู่ระยะพ่นกรดแล้ว!");
-            }
+            FindTargetWall();
         }
 
-        if (!isInSpitStance && !hasReachedWall)
+        float wallX = targetWall != null ? targetWall.position.x : 6.46f;
+        float distX = wallX - transform.position.x;
+
+        if (distX > attackRange)
         {
-            base.FixedUpdate();
+            // เดินไปทางขวาตามปกติ
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
+            }
+        }
+        else
+        {
+            // หยุดความเร็วฟิสิกส์เป็นศูนย์ทุกเฟรมเมื่อถึงระยะยิง (ห้ามสไลด์ต่อ)
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
         }
     }
 
     protected override void Update()
     {
-        base.Update();
+        if (isDead) return;
 
-        if (isInSpitStance && !hasReachedWall)
+        if (targetWall == null)
         {
-            currentSpitTimer -= Time.deltaTime;
-            if (currentSpitTimer <= 0f)
-            {
-                SpitAcid();
-                currentSpitTimer = spitCooldown;
-            }
+            FindTargetWall();
         }
-    }
 
-    private void SpitAcid()
-    {
-        Vector3 spawnPos = spitPoint != null ? spitPoint.position : transform.position + new Vector3(0.5f, 0, 0);
+        float wallX = targetWall != null ? targetWall.position.x : 6.46f;
+        float distX = wallX - transform.position.x;
 
-        if (acidPrefab != null)
+        if (distX > attackRange)
         {
-            GameObject acidObj = Instantiate(acidPrefab, spawnPos, Quaternion.identity);
-
-            Bullet playerBullet = acidObj.GetComponent<Bullet>();
-            if (playerBullet != null)
+            // เดินต่อด้วยแอนิเมชัน walk
+            if (animator != null)
             {
-                Destroy(playerBullet);
+                animator.SetBool("isAttacking", false);
             }
-
-            AcidSpit spit = acidObj.GetComponent<AcidSpit>();
-            if (spit == null)
-            {
-                spit = acidObj.AddComponent<AcidSpit>();
-            }
-
-            spit.SetDirection(Vector2.right);
-            Debug.Log($"🔥 {gameObject.name} พ่นน้ำกรดข้ามกำแพงสำเร็จ!");
         }
         else
         {
-            CreateFallbackAcidProjectile(spawnPos);
+            // หยุดความเร็วฟิสิกส์เป็นศูนย์ทุกเฟรม
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
+
+            // เล่นแอนิเมชันท่ากรีดร้องพ่นกรดต่อเนื่อง
+            if (animator != null)
+            {
+                animator.SetBool("isAttacking", true);
+            }
+
+            // นับถอยหลังพ่นกรดต่อเนื่องจนกว่าจะถูกยิงตาย
+            attackTimer -= Time.deltaTime;
+            if (attackTimer <= 0f)
+            {
+                SpawnAcid();
+                attackTimer = attackCooldown;
+            }
         }
     }
 
-    private void CreateFallbackAcidProjectile(Vector3 spawnPos)
+    // ป้องกันการชนกำแพงแล้วตายหรือทำดาเมจชนกำแพง
+    protected override void OnCollisionEnter2D(Collision2D collision)
     {
-        GameObject tempAcid = new GameObject("AcidSpit_Auto");
-        tempAcid.transform.position = spawnPos;
-        tempAcid.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+        if (isDead) return;
 
-        SpriteRenderer sr = tempAcid.AddComponent<SpriteRenderer>();
-        sr.color = new Color(0.2f, 1f, 0.2f, 1f);
-        sr.sortingOrder = 5;
+        if (IsWallObject(collision.gameObject))
+        {
+            StopAtWall(collision.gameObject);
+        }
+    }
 
-        Texture2D tex = Texture2D.whiteTexture;
-        sr.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+    protected override void OnTriggerEnter2D(Collider2D other)
+    {
+        if (isDead) return;
 
-        CircleCollider2D col = tempAcid.AddComponent<CircleCollider2D>();
-        col.isTrigger = true;
+        if (IsWallObject(other.gameObject))
+        {
+            StopAtWall(other.gameObject);
+        }
+    }
 
-        Rigidbody2D rb = tempAcid.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 0;
+    private bool IsWallObject(GameObject obj)
+    {
+        return obj.CompareTag("Wall") || obj.GetComponent<Barricade>() != null || obj.GetComponentInParent<Barricade>() != null;
+    }
 
-        AcidSpit spit = tempAcid.AddComponent<AcidSpit>();
-        spit.SetDirection(Vector2.right);
+    private void StopAtWall(GameObject wallObj)
+    {
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        if (targetBarricade == null)
+        {
+            targetBarricade = wallObj.GetComponent<Barricade>() ?? wallObj.GetComponentInParent<Barricade>();
+        }
+        if (targetWall == null)
+        {
+            targetWall = wallObj.transform;
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool("isAttacking", true);
+        }
+    }
+
+    // เมธอดหลักสำหรับปล่อยกระสุนกรด (รองรับการเรียกผ่าน Animation Event ชื่อ SpawnAcid)
+    public void SpawnAcid()
+    {
+        if (isDead) return;
+
+        Transform activePoint = spitPoint != null ? spitPoint : mouthPoint;
+        Vector3 spawnPos = activePoint != null ? activePoint.position : transform.position + new Vector3(0.5f, 0.8f, 0f);
+        GameObject prefabToSpawn = acidPrefab != null ? acidPrefab : acidProjectilePrefab;
+
+        if (prefabToSpawn == null)
+        {
+            Debug.LogWarning($"[SpitterZombie] ลืมใส่ Acid Prefab บน {gameObject.name} หรือเปล่า!");
+            return;
+        }
+
+        GameObject acidObj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+
+        // กำหนดทิศทางและดาเมจตาม attackDamage ของ SpitterZombie
+        AcidProjectile projectile = acidObj.GetComponent<AcidProjectile>();
+        AcidSpit acidSpit = acidObj.GetComponent<AcidSpit>();
+
+        if (projectile != null)
+        {
+            projectile.SetDamage(attackDamage);
+            if (targetBarricade != null)
+                projectile.SetTarget(targetBarricade.transform);
+            else
+                projectile.SetDirection(Vector2.right);
+        }
+        else if (acidSpit != null)
+        {
+            acidSpit.SetDamage(attackDamage);
+            if (targetBarricade != null)
+                acidSpit.SetDirection((targetBarricade.transform.position - spawnPos).normalized);
+            else
+                acidSpit.SetDirection(Vector2.right);
+        }
+        else
+        {
+            projectile = acidObj.AddComponent<AcidProjectile>();
+            projectile.SetDamage(attackDamage);
+            if (targetBarricade != null)
+                projectile.SetTarget(targetBarricade.transform);
+            else
+                projectile.SetDirection(Vector2.right);
+        }
+
+        Debug.Log($"🧪 {gameObject.name}: พ่นกรดไปที่ Barricade (Damage: {attackDamage})!");
+    }
+
+    // Alias สำหรับ Animation Event เดิมที่อาจผูกชื่อ SpitAcid ไว้
+    public void SpitAcid()
+    {
+        SpawnAcid();
+    }
+
+    private Transform FindChildRecursive(Transform parent, string childName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == childName) return child;
+            Transform found = FindChildRecursive(child, childName);
+            if (found != null) return found;
+        }
+        return null;
     }
 }
-
