@@ -4,8 +4,14 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed = 15f;
+<<<<<<< Updated upstream
 
     [Header("Bullet Damage")]
+=======
+    [SerializeField] private int damage = 15;
+    [Header("ตั้งค่าความแรงกระสุน")]
+    // 💡 สิ่งที่ขาดไปคือบรรทัดนี้ครับ! ประกาศตัวแปรเก็บค่าดาเมจไว้ด้านบนสุด
+>>>>>>> Stashed changes
     [SerializeField] private int bulletDamage = 10;
 
 <<<<<<< HEAD
